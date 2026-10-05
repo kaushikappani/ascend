@@ -1,0 +1,31 @@
+appId: com.ascend.interviewcoach
+productName: Ascend
+copyright: Copyright © 2026 Appani Kaushik
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**
+  - resources/**
+  - package.json
+  - "!**/*.map"
+# The Claude Code native binary is spawned as a child process, so it must live outside the asar archive.
+asarUnpack:
+  - "**/node_modules/@anthropic-ai/claude-agent-sdk-*/**"
+npmRebuild: false
+# Reuse the Electron build already installed by npm (avoids re-downloading and an
+# antivirus-induced EPERM when electron-builder renames its freshly extracted copy).
+electronDist: node_modules/electron/dist
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Ascend
+  artifactName: Ascend-Setup-${version}.${ext}
