@@ -13,9 +13,9 @@ files:
 asarUnpack:
   - "**/node_modules/@anthropic-ai/claude-agent-sdk-*/**"
 npmRebuild: false
-# Reuse the Electron build already installed by npm (avoids re-downloading and an
-# antivirus-induced EPERM when electron-builder renames its freshly extracted copy).
-electronDist: node_modules/electron/dist
+# Local Windows builds reuse the Electron copy npm installed (see the dist scripts in package.json):
+# it avoids re-downloading and an antivirus-induced EPERM when electron-builder renames its fresh copy.
+# CI runners don't have that copy, so electron-builder downloads Electron there as usual.
 win:
   icon: build/icon.png
   target:

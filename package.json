@@ -14,8 +14,8 @@
     "build": "npm run typecheck && electron-vite build",
     "start": "node scripts/run.cjs preview",
     "icon": "electron scripts/make-icon.cjs",
-    "dist": "npm run build && electron-builder --win",
-    "dist:dir": "npm run build && electron-builder --win --dir",
+    "dist": "npm run build && electron-builder --win -c.electronDist=node_modules/electron/dist",
+    "dist:dir": "npm run build && electron-builder --win --dir -c.electronDist=node_modules/electron/dist",
     "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
