@@ -1,5 +1,5 @@
 // JSON Schemas for Claude Code structured output (validated by the CLI, re-asked on mismatch).
-import { ALL_QUESTION_TYPES } from '@shared/constants';
+import { ALL_QUESTION_TYPES, LEARN_CARD_TYPES } from '@shared/constants';
 
 const str = (description?: string) => (description ? { type: 'string', description } : { type: 'string' });
 const strArray = (description?: string, extra: Record<string, unknown> = {}) => ({
@@ -19,44 +19,110 @@ export interface RoadmapOutput {
   }[];
 }
 
+function levelsArray(minLevels: number, maxLevels: number) {
+  return {
+    type: 'array',
+    minItems: minLevels,
+    maxItems: maxLevels,
+    items: {
+      type: 'object',
+      properties: {
+        number: { type: 'integer', minimum: 1 },
+        title: str('Level title, at most 5 words'),
+        summary: str('One sentence: what the learner can do after this level'),
+        topics: {
+          type: 'array',
+          minItems: 3,
+          maxItems: 7,
+          items: {
+            type: 'object',
+            properties: {
+              title: str('Topic title, at most 6 words'),
+              summary: str('One sentence describing the topic'),
+              concepts: strArray('3-6 key concepts as short noun phrases', { minItems: 2, maxItems: 7 }),
+              interviewFocus: str('One sentence on what interviewers probe about this topic'),
+            },
+            required: ['title', 'summary', 'concepts', 'interviewFocus'],
+          },
+        },
+      },
+      required: ['number', 'title', 'summary', 'topics'],
+    },
+  };
+}
+
 export function roadmapSchema(minLevels: number, maxLevels: number) {
   return {
     type: 'object',
     properties: {
       tagline: str('Short motivating tagline for the track, at most 10 words'),
-      levels: {
-        type: 'array',
-        minItems: minLevels,
-        maxItems: maxLevels,
-        items: {
-          type: 'object',
-          properties: {
-            number: { type: 'integer', minimum: 1 },
-            title: str('Level title, at most 5 words'),
-            summary: str('One sentence: what the learner can do after this level'),
-            topics: {
-              type: 'array',
-              minItems: 3,
-              maxItems: 7,
-              items: {
-                type: 'object',
-                properties: {
-                  title: str('Topic title, at most 6 words'),
-                  summary: str('One sentence describing the topic'),
-                  concepts: strArray('3-6 key concepts as short noun phrases', { minItems: 2, maxItems: 7 }),
-                  interviewFocus: str('One sentence on what interviewers probe about this topic'),
-                },
-                required: ['title', 'summary', 'concepts', 'interviewFocus'],
-              },
-            },
-          },
-          required: ['number', 'title', 'summary', 'topics'],
-        },
-      },
+      levels: levelsArray(minLevels, maxLevels),
     },
     required: ['tagline', 'levels'],
   };
 }
+
+/** New levels appended to a finished roadmap. */
+export function extensionSchema(count: number) {
+  return {
+    type: 'object',
+    properties: { levels: levelsArray(count, count) },
+    required: ['levels'],
+  };
+}
+
+export interface RawCard {
+  type: string;
+  title?: string;
+  prompt?: string;
+  code?: string;
+  codeLanguage?: string;
+  answer?: string;
+  steps?: string[];
+  options?: string[];
+  correctIndex?: number;
+  buckets?: string[];
+  items?: { text: string; bucket: number }[];
+  explanation?: string;
+}
+
+export const walkthroughSchema = {
+  type: 'object',
+  properties: {
+    cards: {
+      type: 'array',
+      minItems: 3,
+      maxItems: 7,
+      items: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: LEARN_CARD_TYPES },
+          title: str('At most 6 words'),
+          prompt: str('Markdown. flashcard: the recall question or term; steps: the scenario; quick_check: the question; sort: what to sort and by which rule'),
+          code: str('Optional code shown with the card (no markdown fences)'),
+          codeLanguage: str('Language of `code`, e.g. java, python, yaml, sql, text'),
+          answer: str('flashcard: the explanation revealed on the back, 2-4 sentences'),
+          steps: strArray('steps: 3-5 short reasoning steps, revealed one at a time'),
+          options: strArray('quick_check: 3-4 options'),
+          correctIndex: { type: 'integer', minimum: 0, description: 'quick_check: index of the correct option' },
+          buckets: strArray('sort: exactly two bucket names'),
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { text: str(), bucket: { type: 'integer', minimum: 0, maximum: 1 } },
+              required: ['text', 'bucket'],
+            },
+            description: 'sort: 4-6 items, each with the index (0 or 1) of the bucket it belongs in',
+          },
+          explanation: str('steps / quick_check / sort: the takeaway shown once the learner has interacted'),
+        },
+        required: ['type', 'title', 'prompt'],
+      },
+    },
+  },
+  required: ['cards'],
+};
 
 export interface RawQuestion {
   type: string;
@@ -122,7 +188,7 @@ export function questionsSchema(topicIds: string[], count: number) {
             sampleAnswer: str('short_answer: a strong 2-4 sentence model answer'),
             explanation: str('1-3 sentences teaching why the answer is right'),
             optionFeedback: strArray('mcq / multi_select: one short line per option explaining why it is right or wrong'),
-            hint: str('Optional nudge that does not give away the answer'),
+            hint: str('One-sentence nudge that does not give away the answer'),
             interviewTip: str('Optional tip on how to talk about this in an interview'),
             difficulty: { type: 'integer', minimum: 1, maximum: 5 },
             concepts: strArray('1-3 key concepts this question tests', { minItems: 1, maxItems: 4 }),

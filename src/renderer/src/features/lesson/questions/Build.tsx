@@ -1,4 +1,4 @@
-import { Lightbulb, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { InlineText } from '../../../components/Markdown';
 import { Kbd, Textarea } from '../../../components/ui';
@@ -10,10 +10,10 @@ import { OptionTile, shuffled, type QuestionProps, type TileState } from './shar
 // Fill in the blanks (word bank or typed)
 // ---------------------------------------------------------------------------
 
-export function FillBlankQuestion({ q, locked, result, onAnswer }: QuestionProps) {
+export function FillBlankQuestion({ q, locked, result, onAnswer, initial }: QuestionProps) {
   const blanks = q.blanks ?? [];
   const bank = q.wordBank;
-  const [values, setValues] = useState<string[]>(() => blanks.map(() => ''));
+  const [values, setValues] = useState<string[]>(() => blanks.map((_, i) => (initial?.type === 'fill_blank' ? (initial.values[i] ?? '') : '')));
   const [focus, setFocus] = useState(0);
   const promptParts = q.prompt.split('___');
   const codeParts = q.code ? q.code.split('___') : null;
@@ -151,9 +151,8 @@ export function FillBlankQuestion({ q, locked, result, onAnswer }: QuestionProps
 // Short answer (graded by Claude)
 // ---------------------------------------------------------------------------
 
-export function ShortAnswerQuestion({ q, locked, onAnswer, onSubmit }: QuestionProps) {
-  const [text, setText] = useState('');
-  const [hint, setHint] = useState(false);
+export function ShortAnswerQuestion({ locked, onAnswer, onSubmit, initial }: QuestionProps) {
+  const [text, setText] = useState(initial?.type === 'short_answer' ? initial.text : '');
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   return (
     <div className="flex flex-col gap-3">
@@ -181,14 +180,7 @@ export function ShortAnswerQuestion({ q, locked, onAnswer, onSubmit }: QuestionP
         <span className="flex items-center gap-1">
           <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to submit
         </span>
-        <span className="flex-1" />
-        {q.hint && !locked && (
-          <button onClick={() => setHint((v) => !v)} className="flex items-center gap-1 text-brand hover:underline">
-            <Lightbulb className="size-3.5" /> {hint ? 'Hide hint' : 'Need a hint?'}
-          </button>
-        )}
       </div>
-      {hint && q.hint && <div className="rounded-2xl bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-ink">{q.hint}</div>}
     </div>
   );
 }
@@ -197,10 +189,11 @@ export function ShortAnswerQuestion({ q, locked, onAnswer, onSubmit }: QuestionP
 // Ordering
 // ---------------------------------------------------------------------------
 
-export function OrderingQuestion({ q, locked, result, onAnswer }: QuestionProps) {
+export function OrderingQuestion({ q, locked, result, onAnswer, initial }: QuestionProps) {
   const items = q.items ?? [];
-  const [pool, setPool] = useState<string[]>(() => shuffled(items));
-  const [seq, setSeq] = useState<string[]>([]);
+  const placed = initial?.type === 'ordering' ? initial.sequence : [];
+  const [pool, setPool] = useState<string[]>(() => shuffled(items).filter((i) => !placed.includes(i)));
+  const [seq, setSeq] = useState<string[]>(placed);
 
   const add = (item: string) => {
     if (locked) return;

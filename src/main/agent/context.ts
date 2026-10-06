@@ -1,5 +1,5 @@
 // Builds compact, prompt-ready descriptions of the learner from stored progress.
-import { MASTERED } from '@shared/constants';
+import { MASTERED, startLevelOption } from '@shared/constants';
 import { daysBetween, dayKey, findTopic, trackStats } from '@shared/progress';
 import type { AppData, Attempt, Target, Track } from '@shared/types';
 import { truncate } from '../util';
@@ -170,7 +170,11 @@ export function levelLabel(track: Track, levelNumber?: number): string {
   if (!levelNumber) return '';
   const level = track.levels.find((l) => l.number === levelNumber);
   const noun = track.kind === 'target' ? 'Stage' : 'Level';
-  return `${noun} ${levelNumber} of ${track.levels.length}${level ? `: ${level.title}` : ''}`;
+  const base = track.kind === 'target' ? 1 : (track.baseLevel ?? 1);
+  // Calibrated roadmaps start at the learner's level, so "level 1" alone would undersell the depth.
+  const calibration = base > 1 ? ` (the roadmap starts at the learner's level — “${startLevelOption(base).label}” — so even level 1 assumes that)` : '';
+  const beyond = track.kind !== 'target' && levelNumber > 10 ? ' (an extension level beyond the original 10-level roadmap: expert depth)' : '';
+  return `${noun} ${levelNumber} of ${track.levels.length}${level ? `: ${level.title}` : ''}${calibration}${beyond}`;
 }
 
 /** Full JSON view of the learner for the coach's get_learner_profile tool. */

@@ -76,9 +76,11 @@ function normalize(raw: Partial<AppData>): AppData {
   };
   const interrupted = 'Interrupted when the app closed. Tap retry to continue.';
   for (const [id, lesson] of Object.entries(data.lessons)) {
+    lesson.walkthroughStatus ??= 'none';
     const primerCut = lesson.primerStatus === 'pending' || lesson.primerStatus === 'streaming';
     const questionsCut = lesson.questionsStatus === 'pending';
-    if (primerCut || questionsCut) {
+    const walkthroughCut = lesson.walkthroughStatus === 'pending' || lesson.walkthroughStatus === 'streaming';
+    if (primerCut || questionsCut || walkthroughCut) {
       // A background prefetch that hadn't finished anything yet is simply regenerated later.
       if (lesson.prefetched && lesson.primerStatus !== 'ready' && lesson.questionsStatus !== 'ready' && !Object.keys(lesson.answers ?? {}).length) {
         delete data.lessons[id];
@@ -90,6 +92,7 @@ function normalize(raw: Partial<AppData>): AppData {
         lesson.primer = '';
       }
       if (questionsCut) lesson.questionsStatus = 'error';
+      if (walkthroughCut) lesson.walkthroughStatus = 'error';
       lesson.error = interrupted;
       lesson.interrupted = true;
     }
@@ -146,7 +149,7 @@ function normalize(raw: Partial<AppData>): AppData {
 }
 
 export function summarizeLesson(lesson: Lesson): LessonSummary {
-  const { primer: _p, questions, answers, ...rest } = lesson;
+  const { primer: _p, walkthrough: _w, questions, answers, ...rest } = lesson;
   return { ...rest, questionCount: questions.length, answeredCount: Object.keys(answers).length };
 }
 
@@ -238,8 +241,9 @@ class Store {
       .filter((l) => l.status === 'completed' || l.status === 'abandoned')
       .sort((a, b) => (b.completedAt ?? b.createdAt).localeCompare(a.completedAt ?? a.createdAt));
     for (const lesson of finished.slice(MAX_LESSON_BODIES)) {
-      if (lesson.questions.length || lesson.primer) {
+      if (lesson.questions.length || lesson.primer || lesson.walkthrough) {
         lesson.primer = undefined;
+        lesson.walkthrough = undefined;
         lesson.questions = [];
         lesson.answers = {};
       }

@@ -111,7 +111,6 @@ async function buildTargetTrack(target: Target): Promise<void> {
       emoji: '🎯',
       color: '#0EA5E9',
       tagline: `Your personal prep path for ${target.company}`,
-      startLevel: 99,
       kind: 'target',
     });
     store.mutate((data) => {

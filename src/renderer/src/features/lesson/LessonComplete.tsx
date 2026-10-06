@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Clock, Flame, RotateCcw, Sparkles, Target, Trophy, X, Zap } from 'lucide-react';
+import { Check, ChevronDown, Clock, Flame, Mountain, RotateCcw, Sparkles, Target, Trophy, X, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -41,11 +41,11 @@ export function LessonComplete({ lesson, result, bestCombo, onClose }: { lesson:
 
   useEffect(() => {
     if (result.passed) {
-      celebrate(!!result.levelUnlocked || perfect);
-      if (result.levelUnlocked) sfx.levelUp();
+      celebrate(!!result.levelUnlocked || !!result.trackCompleted || perfect);
+      if (result.levelUnlocked || result.trackCompleted) sfx.levelUp();
       else sfx.complete();
     }
-  }, [result.passed, result.levelUnlocked, perfect]);
+  }, [result.passed, result.levelUnlocked, result.trackCompleted, perfect]);
 
   const title = checkpoint
     ? result.passed
@@ -86,8 +86,17 @@ export function LessonComplete({ lesson, result, bestCombo, onClose }: { lesson:
           </div>
         )}
 
-        {(result.levelUnlocked || result.goalReached || result.achievements.length > 0) && (
+        {(result.levelUnlocked || result.trackCompleted || result.goalReached || result.achievements.length > 0) && (
           <div className="flex w-full flex-col gap-2.5">
+            {result.trackCompleted && (
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#ffb020] to-[#f0782a] px-5 py-4 text-white">
+                <Mountain className="size-7 shrink-0" />
+                <div>
+                  <div className="text-lg font-black">You've finished the whole roadmap!</div>
+                  <div className="text-sm font-semibold opacity-90">Learning doesn't stop here — Ace is designing your next levels around what you've mastered.</div>
+                </div>
+              </motion.div>
+            )}
             {result.levelUnlocked && (
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#8e7dff] to-[#5433db] px-5 py-4 text-white">
                 <Trophy className="size-7" />

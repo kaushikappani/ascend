@@ -1,11 +1,12 @@
 // Lessons: just-in-time generation (primer + adaptive questions), grading, completion and debriefs.
 import type { AnswerInput, StartLessonInput } from '@shared/api';
 import { CHECKPOINT_PASS_SCORE, PASS_SCORE } from '@shared/constants';
-import { currentLevelNumber, dayKey, findTopic, nextTopic } from '@shared/progress';
+import { canExtendTrack, currentLevelNumber, dayKey, findTopic, levelDepth, nextTopic } from '@shared/progress';
 import type {
   AnswerResult,
   AppData,
   Attempt,
+  LearnCard,
   Lesson,
   LessonKind,
   LessonResult,
@@ -31,14 +32,16 @@ import {
   topicLearnerText,
   weakConcepts,
 } from '../agent/context';
-import { debriefPrompt, gradePrompt, primerPrompt, questionsPrompt, SYSTEM } from '../agent/prompts';
+import { debriefPrompt, gradePrompt, primerPrompt, questionsPrompt, SYSTEM, walkthroughPrompt } from '../agent/prompts';
 import { AgentError, fastModel, mainModel, runAgent, warmStart, type WarmHandle } from '../agent/runtime';
 import {
   debriefSchema,
   gradeSchema,
   questionsSchema,
+  walkthroughSchema,
   type DebriefOutput,
   type GradeOutput,
+  type RawCard,
   type RawQuestion,
 } from '../agent/schemas';
 import { checkAchievements, addMinutes, awardXp, xpForAnswer } from '../engine/gamification';
@@ -181,6 +184,11 @@ function primerDepthFor(d: AppData, kind: LessonKind): PrimerDepth {
   return 'off';
 }
 
+/** Lessons that teach something new get a hands-on walkthrough between the primer and the questions. */
+function hasWalkthrough(d: AppData, kind: LessonKind, depth: PrimerDepth): boolean {
+  return d.settings.walkthrough && depth !== 'off' && (kind === 'lesson' || kind === 'custom');
+}
+
 function lessonTitle(d: AppData, input: StartLessonInput, track: Track): { title: string; subtitle: string } {
   const noun = track.kind === 'target' ? 'Stage' : 'Level';
   if (input.kind === 'lesson' && input.topicId) {
@@ -212,6 +220,7 @@ function createLessonShell(d: AppData, input: StartLessonInput, track: Track): L
     subtitle,
     focus: input.focus,
     primerStatus: depth === 'off' ? 'none' : 'pending',
+    walkthroughStatus: hasWalkthrough(d, input.kind, depth) ? 'pending' : 'none',
     questions: [],
     questionsStatus: 'pending',
     status: 'generating',
@@ -285,7 +294,7 @@ async function generatePrimer(lessonId: string, scope: LessonScope): Promise<voi
       system: SYSTEM.primer,
       prompt: primerPrompt({
         track: scope.track,
-        level: scope.primary?.level,
+        levelLine: scope.primary ? levelLabel(scope.track, scope.primary.level.number) : '',
         topic: scope.primary?.topic,
         focus: lesson.focus,
         concepts: focusConcepts.length ? focusConcepts : [lesson.focus ?? lesson.title],
@@ -475,8 +484,7 @@ async function generateQuestions(lessonId: string, scope: LessonScope, usePrimer
     const scopeMastery = avg(scope.topics.map((t) => d.topicProgress[t.topic.id]?.mastery ?? 0));
     const scopeAttempts = scope.topics.reduce((s, t) => s + (d.topicProgress[t.topic.id]?.attempts ?? 0), 0);
     const center = centerDifficulty(
-      levelNumber,
-      scope.track.levels.length,
+      levelDepth(scope.track, levelNumber),
       primaryProgress?.mastery ?? scopeMastery,
       primaryProgress?.attempts ?? scopeAttempts,
     );
@@ -547,6 +555,102 @@ async function generateQuestions(lessonId: string, scope: LessonScope, usePrimer
   }
 }
 
+/** Validate the walkthrough cards; anything that can't be shown interactively is dropped. */
+function normalizeCards(raw: RawCard[]): LearnCard[] {
+  const out: LearnCard[] = [];
+  for (const r of raw ?? []) {
+    const prompt = asString(r.prompt);
+    if (!prompt) continue;
+    const base: LearnCard = {
+      id: uid('card_'),
+      type: r.type as LearnCard['type'],
+      title: truncate(asString(r.title) || 'Try it', 60),
+      prompt,
+      code: asString(r.code) || undefined,
+      codeLanguage: asString(r.codeLanguage) || undefined,
+      explanation: asString(r.explanation) || undefined,
+    };
+    switch (base.type) {
+      case 'flashcard': {
+        const answer = asString(r.answer) || base.explanation;
+        if (answer) out.push({ ...base, answer, explanation: undefined });
+        break;
+      }
+      case 'steps': {
+        const steps = asStringArray(r.steps, 6);
+        if (steps.length >= 2) out.push({ ...base, steps });
+        break;
+      }
+      case 'quick_check': {
+        const options = asStringArray(r.options, 5);
+        const ci = Number(r.correctIndex);
+        if (options.length < 2 || !Number.isInteger(ci) || ci < 0 || ci >= options.length) break;
+        const s = shuffleOptions(options, [ci]);
+        out.push({ ...base, options: s.options, correctIndex: s.correct[0] });
+        break;
+      }
+      case 'sort': {
+        const buckets = asStringArray(r.buckets, 2);
+        const items = (r.items ?? [])
+          .map((i) => ({ text: asString(i?.text), bucket: Number(i?.bucket) }))
+          .filter((i) => i.text && (i.bucket === 0 || i.bucket === 1))
+          .filter((i, idx, all) => all.findIndex((x) => x.text === i.text) === idx)
+          .slice(0, 8);
+        if (buckets.length < 2 || items.length < 3 || !items.some((i) => i.bucket === 0) || !items.some((i) => i.bucket === 1)) break;
+        out.push({ ...base, buckets, items: shuffle(items) });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+async function generateWalkthrough(lessonId: string, scope: LessonScope): Promise<void> {
+  const d = store.data;
+  const lesson = d.lessons[lessonId];
+  if (!lesson || lesson.walkthroughStatus === 'none') return;
+  const model = mainModel();
+  const job = jobs.start('walkthrough', `Building your hands-on warm-up: ${lesson.title}`, { refId: lessonId, model, background: !!lesson.prefetched });
+  updateLesson(lessonId, (l) => {
+    l.walkthroughStatus = 'pending';
+  });
+  const topicIds = scope.topics.map((t) => t.topic.id);
+  try {
+    const out = await runAgent<{ cards: RawCard[] }>({
+      job,
+      system: SYSTEM.walkthrough,
+      prompt: walkthroughPrompt({
+        track: scope.track,
+        levelLine: scope.primary ? levelLabel(scope.track, scope.primary.level.number) : '',
+        topic: scope.primary?.topic,
+        focus: lesson.focus,
+        concepts: scope.concepts.length ? scope.concepts : [lesson.focus ?? lesson.title],
+        learner: learnerProfileText(d),
+        topicLearner: scope.primary ? topicLearnerText(d, scope.primary.topic.id, scope.primary.topic.title) : '',
+        weak: conceptListText(weakConcepts(d, { topicIds }, 6)),
+        primer: lesson.primerStatus === 'ready' ? lesson.primer : undefined,
+      }),
+      model,
+      effort: 'medium',
+      schema: walkthroughSchema,
+      maxTurns: 4,
+    });
+    const cards = normalizeCards(out.data?.cards ?? []);
+    if (cards.length < 2) throw new AgentError('The warm-up came back incomplete.', 'format');
+    updateLesson(lessonId, (l) => {
+      l.walkthrough = cards;
+      l.walkthroughStatus = 'ready';
+    });
+    job.done();
+  } catch (error) {
+    // Optional step: the player skips straight to the questions.
+    updateLesson(lessonId, (l) => {
+      l.walkthroughStatus = 'error';
+    });
+    job.fail(error);
+  }
+}
+
 async function generateLesson(lessonId: string, mode: 'parallel' | 'sequential'): Promise<void> {
   const d = store.data;
   const lesson = d.lessons[lessonId];
@@ -558,18 +662,26 @@ async function generateLesson(lessonId: string, mode: 'parallel' | 'sequential')
     updateLesson(lessonId, (l) => {
       l.questionsStatus = 'error';
       if (l.primerStatus !== 'none') l.primerStatus = 'error';
+      if (l.walkthroughStatus !== 'none') l.walkthroughStatus = 'error';
       l.error = errorMessage(error);
     });
     return;
   }
   const needPrimer = lesson.primerStatus !== 'none' && lesson.primerStatus !== 'ready';
   const needQuestions = lesson.questionsStatus !== 'ready';
+  const needWalkthrough = lesson.walkthroughStatus === 'pending';
   if (mode === 'sequential') {
     if (needPrimer) await generatePrimer(lessonId, scope);
     if (needQuestions) await generateQuestions(lessonId, scope, store.data.lessons[lessonId]?.primerStatus === 'ready');
+    if (needWalkthrough) await generateWalkthrough(lessonId, scope);
   } else {
     const primerReady = lesson.primerStatus === 'ready';
-    await Promise.all([needPrimer ? generatePrimer(lessonId, scope) : undefined, needQuestions ? generateQuestions(lessonId, scope, primerReady) : undefined]);
+    // The walkthrough builds on the primer, so it follows it while the questions are written alongside.
+    const reading = async () => {
+      if (needPrimer) await generatePrimer(lessonId, scope);
+      if (needWalkthrough) await generateWalkthrough(lessonId, scope);
+    };
+    await Promise.all([reading(), needQuestions ? generateQuestions(lessonId, scope, primerReady) : undefined]);
   }
 }
 
@@ -681,6 +793,7 @@ export function retryLesson(lessonId: string, mode: 'parallel' | 'sequential' = 
   updateLesson(lessonId, (l) => {
     if (l.primerStatus === 'error') l.primerStatus = 'pending';
     if (l.questionsStatus === 'error') l.questionsStatus = 'pending';
+    if (l.walkthroughStatus === 'error' && !Object.keys(l.answers).length) l.walkthroughStatus = 'pending';
     l.error = undefined;
     l.interrupted = undefined;
     if (l.status !== 'in_progress' && l.questionsStatus !== 'ready') l.status = 'generating';
@@ -815,14 +928,17 @@ export async function answerQuestion(input: AnswerInput): Promise<AnswerResult> 
   if (input.retry || lesson.answers[q.id]) return result;
 
   const at = nowIso();
+  const hintUsed = !!input.hintUsed && lesson.kind !== 'checkpoint';
+  // A hinted answer is weaker evidence of mastery than an unaided one.
+  const evidence = hintUsed ? { ...result, score: result.score * 0.75 } : result;
   store.mutate((data) => {
-    lesson.answers[q.id] = { answer: input.answer, result, timeMs: input.timeMs, at };
+    lesson.answers[q.id] = { answer: input.answer, result, timeMs: input.timeMs, at, hintUsed: hintUsed || undefined };
     if (lesson.status === 'ready') lesson.status = 'in_progress';
     const topicId = q.topicId ?? lesson.topicId;
-    if (topicId) applyAnswer(ensureTopicProgress(data, lesson.trackId, topicId), q, result, at);
+    if (topicId) applyAnswer(ensureTopicProgress(data, lesson.trackId, topicId), q, evidence, at);
     data.stats.questionsAnswered += 1;
     if (result.correct) data.stats.correctAnswers += 1;
-    awardXp(data, xpForAnswer(q, result));
+    awardXp(data, xpForAnswer(q, result, hintUsed));
     data.attempts.push({
       id: uid('att_'),
       lessonId: lesson.id,
@@ -840,6 +956,7 @@ export async function answerQuestion(input: AnswerInput): Promise<AnswerResult> 
       correctAnswerText: correctAnswerText(q),
       explanation: q.explanation,
       at,
+      hintUsed: hintUsed || undefined,
       question: result.correct ? undefined : q,
     });
   });
@@ -867,9 +984,10 @@ export function completeLesson(lessonId: string, durationMs: number): LessonResu
     const correctCount = answers.filter((a) => a?.result.correct).length;
     const lessonXp = lesson.questions.reduce((s, q) => {
       const a = lesson.answers[q.id];
-      return s + (a ? xpForAnswer(q, a.result) : 0);
+      return s + (a ? xpForAnswer(q, a.result, a.hintUsed) : 0);
     }, 0);
     const levelBefore = track ? currentLevelNumber(track, data.topicProgress, data.trackProgress) : 0;
+    const finishedBefore = !!track && canExtendTrack(track, data.topicProgress, data.trackProgress);
     const goal = data.settings.dailyGoalXp;
     const xpTodayBefore = (data.stats.xpByDay[today] ?? 0) - lessonXp;
 
@@ -922,6 +1040,7 @@ export function completeLesson(lessonId: string, durationMs: number): LessonResu
     data.stats.lessonsCompleted += 1;
     addMinutes(data, durationMs);
     const levelAfter = track ? currentLevelNumber(track, data.topicProgress, data.trackProgress) : 0;
+    const finishedAfter = !!track && canExtendTrack(track, data.topicProgress, data.trackProgress);
     const ids = lesson.topicId ? [lesson.topicId] : [...byTopic.keys()];
     const masteryAfter = avg(ids.map((id) => data.topicProgress[id]?.mastery ?? 0));
     const achievements = checkAchievements(data);
@@ -948,6 +1067,7 @@ export function completeLesson(lessonId: string, durationMs: number): LessonResu
       masteryAfter,
       passed,
       levelUnlocked: levelAfter > levelBefore ? levelAfter : undefined,
+      trackCompleted: !finishedBefore && finishedAfter ? true : undefined,
       achievements,
       goalReached: xpTodayBefore < goal && xpTodayAfter >= goal,
       debrief: { status: 'pending' },

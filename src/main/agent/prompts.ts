@@ -1,9 +1,9 @@
 // System prompts and prompt builders for every coaching task.
+import { startLevelOption } from '@shared/constants';
 import type {
   InterviewDifficulty,
   InterviewPersona,
   InterviewStyle,
-  Level,
   PrimerDepth,
   QuestionType,
   ResearchMode,
@@ -26,6 +26,7 @@ const today = () => dayKey();
 export const SYSTEM = {
   roadmap: `${PERSONA}\n\nRight now you are designing a learning roadmap that the app will turn into lessons.`,
   primer: `${PERSONA}\n\nRight now you are writing a short study primer (a mini textbook chapter) shown before a practice session.`,
+  walkthrough: `${PERSONA}\n\nRight now you are designing a short, hands-on interactive warm-up that sits between a study primer and graded practice questions.`,
   questions: `${PERSONA}\n\nRight now you are writing practice questions for an adaptive, Duolingo-style lesson. The app grades objective questions automatically from the answer keys you provide, so every answer key must be exactly right.`,
   grader: `${PERSONA}\n\nRight now you are grading a learner's short written answer fairly and consistently, like an experienced interviewer.`,
   debrief: `${PERSONA}\n\nRight now you are writing a brief post-lesson debrief and updating the learner model.`,
@@ -50,7 +51,23 @@ function researchLine(mode: ResearchMode, kind: 'roadmap' | 'primer'): string {
 // Roadmaps
 // ---------------------------------------------------------------------------
 
-export function roadmapPrompt(p: { track: Track; learner: string; research: ResearchMode; startLabel: string; targetText?: string }): string {
+/** Where level 1 of a roadmap starts, by the learner's self-assessed starting point. */
+const CALIBRATION: Record<number, string> = {
+  1: 'They are new to it, so level 1 starts from the absolute foundations.',
+  3: 'They know the basics, so level 1 skips beginner material (installation, hello-world, basic syntax) and briefly consolidates the core fundamentals before moving into practical skills.',
+  5: 'They are comfortable and have used it on real projects, so level 1 assumes working knowledge: it opens with the fundamentals interviewers still probe at that level (internals, tricky details, common misconceptions) and the path builds from there.',
+  7: 'They are advanced, with senior-level experience, so level 1 starts with advanced internals and production concerns and the path climbs to staff and architect depth.',
+};
+
+const TOPIC_SHAPE =
+  'Each topic is one 15-minute lesson with a crisp title (at most 6 words), a one-sentence summary, 3-6 key concepts (short noun phrases that questions will test) and one sentence on what interviewers probe.';
+
+export function roadmapPrompt(p: { track: Track; learner: string; research: ResearchMode; targetText?: string }): string {
+  const option = startLevelOption(p.track.baseLevel ?? 1);
+  const climb =
+    option.level <= 1
+      ? '- Exactly 10 levels, from absolute foundations (level 1) to expert, architect-level interview depth (level 10). Levels 1-3 cover fundamentals, 4-6 practical intermediate skills, 7-8 advanced and production concerns, 9-10 expert depth, architecture and trade-offs.'
+      : `- Exactly 10 levels. Level 1 starts where this learner actually is (see their starting point), not at absolute basics: they begin at level 1 and climb from there. Level 10 reaches expert, architect-level interview depth. Spread the climb evenly: early levels consolidate and fill the gaps typical at their level, middle levels build practical and production depth, late levels cover advanced internals, architecture and trade-offs.`;
   return `Design a personalised learning roadmap for the subject below. The learner will prepare for technical interviews with it, one bite-sized lesson at a time. Lessons, questions and reviews are generated later from the topics you define, so topic titles, summaries and key concepts must be precise.
 
 <subject>
@@ -59,14 +76,50 @@ ${p.track.title}: ${p.track.subject}
 
 <learner>
 ${p.learner}
-Self-assessed starting point for this subject: level ${p.track.startLevel} of 10 (${p.startLabel}).
+Self-assessed starting point for this subject: ${option.label} (${option.hint.toLowerCase()}). ${CALIBRATION[option.level]}
 </learner>
 ${p.targetText ? `\n<active_interview_target>\n${p.targetText}\n</active_interview_target>\nWeave the target's must-have skills into the relevant levels.\n` : ''}
 Structure:
-- Exactly 10 levels, from absolute foundations (level 1) to expert, architect-level interview depth (level 10). Levels 1-3 cover fundamentals, 4-6 practical intermediate skills, 7-8 advanced and production concerns, 9-10 expert depth, architecture and trade-offs.
-- 4-6 topics per level in a sensible learning order. Each topic is one 15-minute lesson with a crisp title (at most 6 words), a one-sentence summary, 3-6 key concepts (short noun phrases that questions will test) and one sentence on what interviewers probe.
+${climb}
+- 4-6 topics per level in a sensible learning order. ${TOPIC_SHAPE}
 - No duplicate topics across levels. A later level may deepen an earlier topic; its title should make the new angle clear.
 - Reflect what is actually asked in interviews today (${today()}), including modern language features, frameworks and tooling.
+${researchLine(p.research, 'roadmap')}`;
+}
+
+export function extendRoadmapPrompt(p: {
+  track: Track;
+  learner: string;
+  strong: string;
+  weak: string;
+  from: number;
+  count: number;
+  research: ResearchMode;
+  targetText?: string;
+}): string {
+  const to = p.from + p.count - 1;
+  const covered = p.track.levels.map((l) => `Level ${l.number}: ${l.title} — ${l.topics.map((t) => t.title).join('; ')}`).join('\n');
+  return `The learner has completed every level of their roadmap below. Learning never stops, so design the next ${p.count} levels (numbered ${p.from}-${to}) to keep them growing past it.
+
+<subject>
+${p.track.title}: ${p.track.subject}
+</subject>
+
+<learner>
+${p.learner}
+Strong concepts: ${p.strong}
+Weak concepts: ${p.weak}
+</learner>
+
+<covered_so_far>
+${covered}
+</covered_so_far>
+${p.targetText ? `\n<active_interview_target>\n${p.targetText}\n</active_interview_target>\n` : ''}
+Structure:
+- Exactly ${p.count} levels that go beyond everything covered so far: deeper internals, specialisations, emerging and current practice (as of ${today()}), large-scale architecture, real-world case studies and incident post-mortems, and the judgement and trade-offs expected from staff-level engineers. Where the learner is weak, revisit those areas from a harder, more advanced angle instead of repeating them.
+- 4-6 topics per level in a sensible learning order. ${TOPIC_SHAPE}
+- No topic may duplicate one in covered_so_far; when you deepen one, the title must make the new angle clear.
+- Put the level number in "number", starting at ${p.from}.
 ${researchLine(p.research, 'roadmap')}`;
 }
 
@@ -109,9 +162,15 @@ Structure:
 
 const PRIMER_WORDS: Record<Exclude<PrimerDepth, 'off'>, number> = { brief: 300, standard: 600, deep: 1000 };
 
+function topicBlockText(topic: Topic | undefined, focus: string | undefined): string {
+  return topic
+    ? `Topic: ${topic.title} — ${topic.summary}\nWhy interviewers ask: ${topic.interviewFocus ?? 'core interview material'}`
+    : `Session focus: ${focus ?? 'mixed review'}`;
+}
+
 export function primerPrompt(p: {
   track: Track;
-  level?: Level;
+  levelLine: string;
   topic?: Topic;
   focus?: string;
   concepts: string[];
@@ -123,16 +182,13 @@ export function primerPrompt(p: {
   research: ResearchMode;
 }): string {
   const words = PRIMER_WORDS[p.depth];
-  const levelLine = p.level ? `${p.track.kind === 'target' ? 'Stage' : 'Level'} ${p.level.number} of ${p.track.levels.length}: ${p.level.title}` : '';
-  const topicBlock = p.topic
-    ? `Topic: ${p.topic.title} — ${p.topic.summary}\nWhy interviewers ask: ${p.topic.interviewFocus ?? 'core interview material'}`
-    : `Session focus: ${p.focus ?? 'mixed review'}`;
+  const levelLine = p.levelLine;
   return `Write the short primer the learner reads right before practising this lesson.
 
 <lesson>
 Track: ${p.track.title}
 ${levelLine}
-${topicBlock}
+${topicBlockText(p.topic, p.focus)}
 Key concepts to cover: ${p.concepts.join('; ')}
 </lesson>
 
@@ -153,6 +209,44 @@ ${p.depth === 'brief' ? '5' : '6'}. "## Key takeaways" — 3-5 bullets.
 Spend more words on the learner's weak concepts and mistakes, and don't re-explain what they clearly know. Pitch the depth at ${levelLine || 'the learner\'s level'}.
 ${researchLine(p.research, 'primer')}
 Reply with the primer only.`;
+}
+
+// ---------------------------------------------------------------------------
+// Hands-on walkthrough
+// ---------------------------------------------------------------------------
+
+export function walkthroughPrompt(p: {
+  track: Track;
+  levelLine: string;
+  topic?: Topic;
+  focus?: string;
+  concepts: string[];
+  learner: string;
+  topicLearner: string;
+  weak: string;
+  primer?: string;
+}): string {
+  return `Design the short interactive walkthrough the learner does right after reading the primer and before the graded questions. It should get them actively using the ideas (recalling, predicting, sorting, stepping through an example) so the questions feel like the next step rather than a jump.
+
+<lesson>
+Track: ${p.track.title}
+${p.levelLine}
+${topicBlockText(p.topic, p.focus)}
+Key concepts: ${p.concepts.join('; ')}
+</lesson>
+
+<learner>
+${p.learner}
+${p.topicLearner}
+Weak concepts: ${p.weak}
+</learner>
+${p.primer ? `\n<primer>\n${p.primer.slice(0, 9000)}\n</primer>\nBuild on this primer: approach each idea from a fresh, concrete angle instead of repeating its sentences.\n` : ''}
+Write 4-6 cards in teaching order (recall first, then apply), mixing these types:
+- flashcard: \`prompt\` is a recall question or a term to define; \`answer\` is the crisp explanation (2-4 sentences) revealed when the learner flips the card.
+- steps: a worked example. \`prompt\` sets up a realistic scenario (any code goes in \`code\` with \`codeLanguage\`), \`steps\` are 3-5 short reasoning steps revealed one at a time, and \`explanation\` is the takeaway.
+- quick_check: an ungraded warm-up question, ideally "predict what happens" or "spot the issue": 3-4 \`options\`, \`correctIndex\`, and an \`explanation\` shown as soon as they pick.
+- sort: \`prompt\` asks them to sort 4-6 \`items\` into two \`buckets\` (e.g. checked vs unchecked exceptions); each item's \`bucket\` is 0 or 1 and both buckets are used; \`explanation\` states the rule.
+Include at least one steps card and one quick_check, and use each type at most twice. Give every card a short \`title\` (at most 6 words). Cover the key concepts and spend more cards on the learner's weak ones. Keep text short — this is hands-on, not more reading. Code must be correct as shown unless the card is about the bug. Pitch it at ${p.levelLine || "the learner's level"}.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -215,7 +309,7 @@ Quality bar for every question:
 - Keep the prompt short (about 45 words at most). Put code in \`code\` with \`codeLanguage\`, never inside the prompt. Code must be correct as shown unless the question is about the bug.
 - \`explanation\` teaches: why the right answer is right, and why the most tempting wrong answer is wrong.
 - \`concepts\`: 1-3 of the key concepts, reusing the exact phrases given.
-- Optionally add \`hint\` (a gentle nudge) and \`interviewTip\` (how to say it in an interview), each one sentence.
+- Add a \`hint\`: one sentence that points at the key idea or the right way to reason about it, without giving the answer away (the app reveals it only if the learner asks). Optionally add \`interviewTip\` (how to say it in an interview), one sentence.
 - Ground scenarios in realistic engineering work.
 
 ${TYPE_RULES}`;

@@ -190,6 +190,9 @@ export function SettingsPage() {
               ]}
             />
           </Row>
+          <Row label="Hands-on warm-up" hint="Flashcards, worked examples and quick checks between the primer and the questions. Needs the primer on.">
+            <Toggle checked={settings.walkthrough} onChange={(v) => save({ walkthrough: v })} label="Hands-on warm-up" />
+          </Row>
           <Row label="Question types" hint="The coach mixes the enabled types in every lesson.">
             <div className="flex flex-wrap gap-2">
               {ALL_QUESTION_TYPES.map((t) => (
