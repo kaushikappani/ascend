@@ -1,0 +1,92 @@
+# Builds the desktop apps on GitHub's runners and publishes them as a GitHub Release.
+# Trigger: push a version tag, e.g.  git tag v1.1.0 && git push origin v1.1.0
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            args: --win
+            file: dist/Ascend-Windows-Setup.exe
+          - name: macOS Apple Silicon
+            os: macos-latest
+            args: --mac --arm64
+            file: dist/Ascend-macOS-arm64.dmg
+          - name: macOS Intel
+            os: macos-15-intel
+            args: --mac --x64
+            file: dist/Ascend-macOS-x64.dmg
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Package
+        run: npx electron-builder ${{ matrix.args }} --publish never
+        env:
+          # No signing certificates in CI: Windows ships unsigned, macOS is ad-hoc signed (see electron-builder.yml).
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.file }}
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    # Publish whatever built, so one failing platform doesn't hold back the others.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la dist
+          cat > notes.md <<'EOF'
+          ## Download
+
+          | Platform | File |
+          |---|---|
+          | Windows 10/11 (x64) | **Ascend-Windows-Setup.exe** |
+          | macOS, Apple Silicon (M1 and later) | **Ascend-macOS-arm64.dmg** |
+          | macOS, Intel | **Ascend-macOS-x64.dmg** |
+
+          Ascend needs a Claude Code sign-in (Pro, Max, Team or Enterprise) or an Anthropic API key.
+
+          **First launch**
+          - Windows: SmartScreen may say "Windows protected your PC" — choose **More info → Run anyway** (the installer isn't code-signed yet).
+          - macOS: open the DMG and drag Ascend to Applications. On first launch macOS blocks it because it isn't notarized yet — open **System Settings → Privacy & Security** and click **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/Ascend.app` in Terminal.
+          EOF
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Ascend $GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            --latest

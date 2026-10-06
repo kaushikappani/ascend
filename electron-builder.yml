@@ -28,4 +28,15 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Ascend
-  artifactName: Ascend-Setup-${version}.${ext}
+  # Version-free names keep the website's "latest release" download links stable.
+  artifactName: Ascend-Windows-Setup.${ext}
+mac:
+  icon: build/icon.png
+  category: public.app-category.education
+  target:
+    - target: dmg
+  # No Apple Developer ID yet: ad-hoc signing lets it run on Apple Silicon; Gatekeeper asks once on first launch.
+  identity: "-"
+  hardenedRuntime: false
+dmg:
+  artifactName: Ascend-macOS-${arch}.${ext}

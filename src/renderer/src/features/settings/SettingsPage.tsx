@@ -91,7 +91,7 @@ function ConnectionSection({ settings, info }: { settings: Settings; info: AppIn
         />
       </Row>
       {settings.authMode === 'apiKey' && (
-        <Row label="API key" hint="Stored encrypted with Windows credential protection. Never exported.">
+        <Row label="API key" hint="Stored encrypted with your system's credential protection. Never exported.">
           <div className="flex gap-2">
             <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={settings.hasApiKey ? '•••••••••••• (saved)' : 'sk-ant-…'} />
             <Button icon={<KeyRound className="size-4" />} disabled={!key.trim()} onClick={() => void attempt("Couldn't save the key", () => api.claude.setApiKey(key.trim())).then(() => setKey(''))}>

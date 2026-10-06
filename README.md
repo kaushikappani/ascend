@@ -1,4 +1,4 @@
-# Ascend — AI interview coach (Windows)
+# Ascend — AI interview coach (Windows & macOS)
 
 Ascend is a Duolingo-style desktop app that turns **Claude Code** into your personal
 interview trainer. There is no pre-written course: Claude designs your roadmap, writes
@@ -25,16 +25,33 @@ It ships with two tracks, **Java & Spring Boot** and **Agentic AI**, each levell
 
 ## Install
 
-Run **`dist\Ascend-Setup-1.0.0.exe`**. It installs per-user, with Start menu and desktop shortcuts.
-To run without installing, use `dist\win-unpacked\Ascend.exe`. On first launch, onboarding checks your
-Claude Code sign-in, asks about you, and designs your roadmaps (about 1–2 minutes).
+Download the latest build from the [website](https://kaushikappani.github.io/ascend/) or
+[GitHub Releases](https://github.com/kaushikappani/ascend/releases/latest):
 
-> The installer isn't code-signed, so Windows SmartScreen may show "Windows protected your PC".
-> Choose **More info → Run anyway**.
+- **Windows 10/11**: `Ascend-Windows-Setup.exe`. It installs per-user, with Start menu and desktop shortcuts.
+- **macOS**: `Ascend-macOS-arm64.dmg` (Apple Silicon) or `Ascend-macOS-x64.dmg` (Intel). Drag Ascend into Applications.
+
+On first launch, onboarding checks your Claude Code sign-in, asks about you, and designs your roadmaps (about 1–2 minutes).
+
+> The builds aren't code-signed or notarized yet. On Windows, SmartScreen may show "Windows protected your PC":
+> choose **More info → Run anyway**. On macOS, open **System Settings → Privacy & Security** and click
+> **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/Ascend.app`.
+
+### Releasing
+
+Builds are made by GitHub Actions (`.github/workflows/release.yml`). Bump `version` in `package.json`, then push a tag:
+
+```powershell
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+The workflow builds the Windows installer and both macOS DMGs and publishes them as a GitHub Release. The website
+(`site/`, published from the `gh-pages` branch) always links to the latest release.
 
 ## Requirements
 
-- Windows 10/11 (x64)
+- Windows 10/11 (x64), or macOS on Apple Silicon or Intel
 - **Claude Code sign-in** (Pro, Max, Team or Enterprise). Run `claude` in a terminal and use `/login`.
   You can also use an Anthropic API key in *Settings → Claude connection*.
 - Node.js 20+ (only to build from source)
@@ -50,7 +67,8 @@ npm install
 npm run dev        # development with hot reload
 npm run build      # typecheck + production bundles
 npm run start      # run the production build
-npm run dist       # build the Windows installer → dist\Ascend-Setup-1.0.0.exe
+npm run dist       # build the Windows installer → dist\Ascend-Windows-Setup.exe
+npm run dist:mac   # build the macOS DMG (run on a Mac) → dist/Ascend-macOS-<arch>.dmg
 npm run dist:dir   # unpacked app → dist\win-unpacked\Ascend.exe
 ```
 

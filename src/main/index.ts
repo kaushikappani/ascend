@@ -36,7 +36,9 @@ function createWindow(): void {
     title: 'Ascend',
     icon,
     backgroundColor: colors.color,
-    titleBarStyle: 'hidden',
+    // Windows draws its controls over the app's own top bar; macOS keeps its native title bar
+    // so the traffic lights never sit on top of the sidebar or the lesson header.
+    titleBarStyle: process.platform === 'darwin' ? 'default' : 'hidden',
     titleBarOverlay: process.platform === 'win32' ? { ...colors, height: 48 } : undefined,
     autoHideMenuBar: true,
     webPreferences: {
@@ -87,7 +89,10 @@ if (!app.requestSingleInstanceLock()) {
     cleanupPrefetched();
     store.onChange(() => scheduleSnapshot());
     registerIpc(() => win);
-    Menu.setApplicationMenu(null);
+    // macOS routes Cmd+C/V/Q through the app menu, so it keeps the standard one.
+    Menu.setApplicationMenu(
+      process.platform === 'darwin' ? Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }]) : null,
+    );
     createWindow();
 
     nativeTheme.on('updated', () => {
