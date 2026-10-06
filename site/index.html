@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ascend — AI Interview Coach</title>
-  <meta name="description" content="Ascend is a Duolingo-style desktop app that turns Claude into your personal interview coach: a roadmap that starts at your level, lessons you can question, hands-on practice and mock interviews that adapt to every answer." />
+  <title>Ascend: Interactive learning that never stops</title>
+  <meta name="description" content="Ascend is an AI learning coach for your desktop. Ace builds a path that starts at your level, teaches with lessons you can question, makes you practise hands-on and keeps adding levels as you grow." />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Ascend — AI Interview Coach" />
-  <meta property="og:description" content="A roadmap that starts at your level, lessons you can question, hands-on practice and mock interviews. For Windows and macOS." />
+  <meta property="og:title" content="Ascend: Interactive learning that never stops" />
+  <meta property="og:description" content="Lessons you can question, hands-on practice and a path that keeps growing with you. For Windows and macOS." />
   <meta property="og:image" content="https://kaushikappani.github.io/ascend/assets/learn-path.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="theme-color" content="#6c5ce7" />
@@ -31,9 +31,8 @@
       --brand-ink: #3a2ba8;
       --ok: #1fae6b;
       --ok-soft: #e2f7ec;
-      --warn: #f2a516;
       --xp: #ffb020;
-      --orange: #f08a24;
+      --dim: rgb(20 20 45 / 0.22);
       --shadow: 0 24px 60px -18px rgb(30 30 80 / 0.28);
       --shadow-sm: 0 8px 24px -10px rgb(30 30 80 / 0.18);
       color-scheme: light;
@@ -53,6 +52,7 @@
         --brand-soft: #262350;
         --brand-ink: #cdc6ff;
         --ok-soft: #12301f;
+        --dim: rgb(0 0 0 / 0.42);
         --shadow: 0 28px 70px -18px rgb(0 0 0 / 0.75);
         --shadow-sm: 0 10px 28px -10px rgb(0 0 0 / 0.6);
         color-scheme: dark;
@@ -98,6 +98,15 @@
     .btn-secondary { background: var(--bg-elev); color: var(--text); border: 2px solid var(--border); box-shadow: 0 5px 0 var(--border-strong); }
     .btn-secondary:hover { background: var(--bg-sunken); }
     .btn-secondary:active { box-shadow: 0 2px 0 var(--border-strong); }
+    .btn-coffee { background: #ffdd00; color: #1d1e33; box-shadow: 0 5px 0 #c9ae00; }
+    .btn-coffee:hover { filter: brightness(1.04); }
+    .btn-coffee:active { box-shadow: 0 2px 0 #c9ae00; }
+    .support {
+      position: relative; z-index: 1; max-width: 900px; margin: 22px auto 0; padding: 18px 22px; border-radius: 24px;
+      background: rgb(255 255 255 / 0.12); display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px;
+    }
+    .support p { flex: 1 1 320px; font-weight: 700; color: rgb(255 255 255 / 0.92); }
+    .support .btn { height: 50px; font-size: 14.5px; }
 
     /* Nav */
     .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: saturate(160%) blur(14px); background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--border); }
@@ -117,23 +126,20 @@
     }
     .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
     .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-ink); font-size: 14px; font-weight: 800; }
-    .hero h1 { font-size: clamp(40px, 5.6vw, 64px); font-weight: 900; margin: 18px 0 18px; }
+    .hero h1 { font-size: clamp(42px, 6vw, 68px); font-weight: 900; margin: 18px 0 18px; }
     .hero h1 .hl { color: var(--brand); }
     .cta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
     .fine { margin-top: 16px; font-size: 14px; font-weight: 700; color: var(--faint); }
     .hero-art { position: relative; }
-    .window {
-      border-radius: 16px; overflow: hidden; background: var(--bg-elev); border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-    }
+    .window { border-radius: 16px; overflow: hidden; background: var(--bg-elev); border: 1px solid var(--border); box-shadow: var(--shadow); }
     .window-bar { display: flex; gap: 7px; align-items: center; height: 30px; padding: 0 12px; background: var(--bg-sunken); border-bottom: 1px solid var(--border); }
     .window-bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong); }
     .hero-art .window { transform: perspective(1600px) rotateY(-7deg) rotateX(2deg); transform-origin: left center; }
-    .ace { position: absolute; left: -46px; bottom: -34px; width: 132px; filter: drop-shadow(0 12px 18px rgb(30 30 80 / 0.25)); animation: bob 2.8s ease-in-out infinite; }
+    .hero .ace { position: absolute; left: -46px; bottom: -34px; width: 132px; filter: drop-shadow(0 12px 18px rgb(30 30 80 / 0.25)); animation: bob 2.8s ease-in-out infinite; }
     .bubble {
-      position: absolute; left: 82px; bottom: 76px; max-width: 220px; padding: 12px 16px;
+      position: absolute; left: 82px; bottom: 76px; max-width: 230px; padding: 12px 16px;
       background: var(--bg-elev); border: 2px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-sm);
-      font-weight: 800; font-size: 15px; line-height: 1.35;
+      font-weight: 800; font-size: 15px; line-height: 1.35; min-height: 48px;
     }
     @keyframes bob { 50% { transform: translateY(-8px); } }
 
@@ -153,22 +159,55 @@
     .step-num { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--brand); color: #fff; font-weight: 900; font-size: 20px; box-shadow: 0 4px 0 var(--brand-deep); margin-bottom: 18px; }
     .step p { color: var(--muted); font-weight: 600; margin-top: 8px; }
 
-    /* Spotlights */
-    .spot { display: grid; grid-template-columns: 1fr 1.15fr; gap: 64px; align-items: center; }
-    .spot + .spot { margin-top: 110px; }
-    .spot.flip .spot-text { order: 2; }
-    .spot-text { display: grid; gap: 16px; }
-    .ticks { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 12px; }
+    /* Scroll tour: the screenshot stays pinned and zooms to what Ace is explaining */
+    .ticks { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 10px; }
     .ticks li { position: relative; padding-left: 34px; font-weight: 700; color: var(--muted); }
     .ticks li b { color: var(--text); }
     .ticks li::before {
       content: ''; position: absolute; left: 0; top: 3px; width: 22px; height: 22px; border-radius: 8px;
       background: var(--ok-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231fae6b' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 15px no-repeat;
     }
-    .stack { position: relative; padding-bottom: 60px; }
-    .stack .window + .window { position: absolute; width: 62%; right: -18px; bottom: 0; }
-    .tag { display: inline-flex; justify-self: start; padding: 5px 12px; border-radius: 10px; font-size: 13px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+    .tag { display: inline-flex; justify-self: start; padding: 5px 12px; border-radius: 10px; font-size: 13px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; background: var(--brand-soft); color: var(--brand-ink); }
     .tag.new { background: var(--ok-soft); color: var(--ok); }
+    .tour { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 56px; }
+    .tour-step { min-height: 76vh; display: grid; align-content: center; gap: 14px; opacity: 0.32; transition: opacity 400ms ease; }
+    .tour-step.active { opacity: 1; }
+    .tour-step h3 { font-size: clamp(26px, 3vw, 36px); }
+    .tour-step > p { font-size: 18px; font-weight: 600; color: var(--muted); }
+    .tour-stage { position: sticky; top: 92px; align-self: start; padding-bottom: 8px; }
+    .tour-bar-label { margin-left: 8px; font-size: 12.5px; font-weight: 900; color: var(--faint); letter-spacing: 0.06em; text-transform: uppercase; }
+    .tour-view { position: relative; aspect-ratio: 1600 / 932; overflow: hidden; background: var(--bg-sunken); }
+    .tour-layer { position: absolute; inset: 0; transform-origin: 0 0; transition: transform 950ms cubic-bezier(0.65, 0, 0.25, 1); will-change: transform; }
+    .tour-layer img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 450ms ease; }
+    .tour-layer img.on { opacity: 1; }
+    .tour-ring {
+      position: absolute; border: 3px solid var(--brand); border-radius: 14px; pointer-events: none;
+      box-shadow: 0 0 0 9999px var(--dim), 0 0 0 6px color-mix(in srgb, var(--brand) 25%, transparent);
+      transition: left 950ms cubic-bezier(0.65, 0, 0.25, 1), top 950ms cubic-bezier(0.65, 0, 0.25, 1), width 950ms cubic-bezier(0.65, 0, 0.25, 1), height 950ms cubic-bezier(0.65, 0, 0.25, 1);
+    }
+    .tour-track { position: relative; height: 112px; margin-top: 4px; }
+    .tour-ace-wrap { position: absolute; bottom: 0; left: 20%; width: 104px; margin-left: -52px; transition: left 850ms cubic-bezier(0.65, 0, 0.25, 1); }
+    .tour-ace { width: 104px; filter: drop-shadow(0 10px 14px rgb(30 30 80 / 0.22)); }
+    .tour-ace.hop { animation: hop 650ms ease; }
+    .tour-ace .pupils { transition: transform 600ms ease; }
+    @keyframes hop { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-20px) rotate(-6deg); } 55% { transform: translateY(0); } 72% { transform: translateY(-6px); } }
+    /* Full-width speech bubble whose pointer follows Ace along the track. */
+    .tour-bubble {
+      position: relative; margin-top: 10px; padding: 14px 18px;
+      background: var(--bg-elev); border: 2px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-sm);
+      font-weight: 800; font-size: 16px; line-height: 1.42; min-height: 116px;
+    }
+    .tour-bubble::before {
+      content: ''; position: absolute; top: -11px; left: var(--tail, 20%); width: 18px; height: 18px; margin-left: -9px;
+      background: var(--bg-elev); border-top: 2px solid var(--border); border-left: 2px solid var(--border); border-radius: 5px 0 0 0;
+      transform: rotate(45deg); transition: left 850ms cubic-bezier(0.65, 0, 0.25, 1);
+    }
+    .tour-bubble .who { display: block; font-size: 12px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brand); margin-bottom: 2px; }
+    .typing::after { content: ''; display: inline-block; width: 0.5em; height: 1em; margin-left: 2px; vertical-align: -0.12em; background: var(--brand); border-radius: 2px; animation: caret 0.9s steps(1) infinite; }
+    @keyframes caret { 50% { opacity: 0; } }
+    .tour-dots { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+    .tour-dots span { width: 8px; height: 8px; border-radius: 99px; background: var(--border-strong); transition: width 300ms ease, background 300ms ease; }
+    .tour-dots span.on { width: 22px; background: var(--brand); }
 
     /* Grid */
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -183,10 +222,7 @@
     .download .lead { color: rgb(255 255 255 / 0.85); }
     .download .eyebrow { color: #ffd27a; }
     .dl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
-    .dl {
-      background: var(--bg-elev); color: var(--text); border-radius: 28px; padding: 30px; display: grid; gap: 14px; align-content: start;
-      box-shadow: 0 8px 0 rgb(0 0 0 / 0.18); border: 3px solid transparent;
-    }
+    .dl { background: var(--bg-elev); color: var(--text); border-radius: 28px; padding: 30px; display: grid; gap: 14px; align-content: start; box-shadow: 0 8px 0 rgb(0 0 0 / 0.18); border: 3px solid transparent; }
     .dl.recommended { border-color: var(--xp); }
     .dl-head { display: flex; align-items: center; gap: 14px; }
     .dl-head svg { width: 42px; height: 42px; flex: none; }
@@ -210,7 +246,8 @@
     .faq summary { cursor: pointer; font-weight: 900; font-size: 18px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
     .faq summary::-webkit-details-marker { display: none; }
     .faq summary::after { content: '+'; color: var(--brand); font-size: 24px; line-height: 1; }
-    .faq details[open] summary::after { content: '–'; }
+    .faq summary::after { transition: transform 200ms ease; }
+    .faq details[open] summary::after { transform: rotate(45deg); }
     .faq details p { margin-top: 10px; color: var(--muted); font-weight: 600; }
 
     footer { padding: 46px 0 56px; border-top: 1px solid var(--border); color: var(--faint); font-weight: 700; font-size: 15px; }
@@ -219,30 +256,45 @@
     footer a:hover { color: var(--text); }
 
     @media (max-width: 960px) {
-      .hero-grid, .spot { grid-template-columns: 1fr; gap: 40px; }
-      .spot.flip .spot-text { order: 0; }
+      .hero-grid { grid-template-columns: 1fr; gap: 40px; }
       .hero-art .window { transform: none; }
-      .ace { left: -8px; width: 104px; bottom: -40px; }
+      .hero .ace { left: -8px; width: 104px; bottom: -40px; }
       .bubble { left: 92px; bottom: 50px; }
       .steps, .grid { grid-template-columns: 1fr 1fr; }
       .nav-links { display: none; }
       .nav .btn { margin-left: auto; }
+      /* The pinned screenshot sits on top and the steps scroll underneath it. */
+      .tour { grid-template-columns: 1fr; gap: 0; }
+      .tour-stage { order: -1; top: 68px; z-index: 5; background: var(--bg); padding-top: 12px; }
+      .tour-step { min-height: 62vh; padding: 24px 0; }
+      .tour-track { height: 88px; }
+      .tour-ace-wrap { width: 80px; margin-left: -40px; }
+      .tour-ace { width: 80px; }
+      .tour-bubble { font-size: 15px; min-height: 100px; }
     }
     @media (max-width: 640px) {
       body { font-size: 16px; }
-      .steps, .grid, .dl-grid { grid-template-columns: 1fr; }
+      .steps, .grid { grid-template-columns: 1fr; }
+      .dl-grid { grid-template-columns: minmax(0, 1fr); }
+      .dl .btn { white-space: normal; height: auto; min-height: 56px; padding: 12px 18px; text-align: center; line-height: 1.25; }
       .download { padding: 44px 18px; border-radius: 28px; }
       .dl { padding: 22px; }
       section { padding: 64px 0; }
       .cta .btn { width: 100%; }
-      .stack .window + .window { position: relative; width: 100%; right: 0; margin-top: 16px; }
-      .stack { padding-bottom: 0; }
       .bubble { display: none; }
-      .ace { bottom: -36px; width: 84px; }
+      .hero .ace { bottom: -36px; width: 84px; }
+      .tour-track { height: 70px; }
+      .tour-ace-wrap { width: 62px; margin-left: -31px; }
+      .tour-ace { width: 62px; }
+      .tour-bubble { padding: 10px 13px; font-size: 13.5px; line-height: 1.38; min-height: 104px; margin-top: 8px; }
+      .tour-bubble .who { display: none; }
+      .tour-dots { margin-top: 8px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      .ace { animation: none; }
+      .hero .ace { animation: none; }
+      .tour-layer, .tour-ring, .tour-ace-wrap, .tour-bubble::before, .tour-step, .tour-layer img { transition: none; }
+      .tour-ace.hop { animation: none; }
     }
   </style>
 </head>
@@ -252,9 +304,10 @@
       <a class="brand" href="#top"><img src="assets/logo.svg" alt="" />Ascend</a>
       <div class="nav-links">
         <a href="#how">How it works</a>
-        <a href="#features">Features</a>
+        <a href="#tour">Tour</a>
         <a href="#faq">FAQ</a>
         <a href="https://github.com/kaushikappani/ascend">GitHub</a>
+        <a data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">☕ Buy me a coffee</a>
       </div>
       <a class="btn btn-primary" href="#download">Download</a>
     </div>
@@ -263,22 +316,22 @@
   <header class="hero" id="top">
     <div class="wrap hero-grid">
       <div>
-        <span class="pill">✨ New in 1.1 — hands-on lessons, hints &amp; endless levels</span>
-        <h1>Ace your tech interviews, <span class="hl">one level at a time.</span></h1>
-        <p class="lead">Ascend turns Claude into your personal interview coach. It designs a roadmap that starts at your level, teaches with bite-sized lessons you can question, drills you Duolingo-style and runs realistic mock interviews — adapting to every answer you give.</p>
+        <span class="pill">✨ New in 1.1: hands-on lessons, hints &amp; endless levels</span>
+        <h1>Interactive learning that <span class="hl">never stops.</span></h1>
+        <p class="lead">Ascend is your AI learning coach. Ace builds a path that starts at your level, teaches with lessons you can question, gets you practising hands-on, and keeps adding new levels as you grow. Learn any tech subject, one level at a time, for as long as you like.</p>
         <div class="cta">
           <a class="btn btn-primary" data-download="primary" href="#download">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
             <span data-download-label>Download Ascend</span>
           </a>
-          <a class="btn btn-secondary" href="#how">See how it works</a>
+          <a class="btn btn-secondary" href="#tour">Take the tour</a>
         </div>
         <p class="fine">Desktop app for Windows 10/11 and macOS · Uses your Claude Code sign-in or an Anthropic API key</p>
       </div>
       <div class="hero-art">
         <div class="window">
           <div class="window-bar"><span></span><span></span><span></span></div>
-          <img src="assets/learn-path.jpg" width="1600" height="932" alt="Ascend's learning path: a Java & Spring Boot roadmap that starts at the learner's level, with completed and upcoming topics." />
+          <img src="assets/learn-path.jpg" width="1600" height="932" alt="Ascend's learning path: a Java & Spring Boot track that starts at the learner's level, with completed and upcoming topics." />
         </div>
         <svg class="ace" viewBox="0 0 120 124" aria-hidden="true">
           <defs><linearGradient id="ace-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a293ff"/><stop offset="1" stop-color="#5b41e2"/></linearGradient></defs>
@@ -299,14 +352,14 @@
           <ellipse cx="85" cy="77" rx="5.5" ry="3.2" fill="#ff8fb1" opacity="0.65"/>
           <path d="M50 78 Q60 88 70 78" stroke="#1d1e33" stroke-width="3.2" fill="none" stroke-linecap="round"/>
         </svg>
-        <div class="bubble">Hi, I'm Ace! Your Level 1 starts exactly where you are. 👋</div>
+        <div class="bubble" data-type="Hi, I'm Ace! I'll teach you anything, starting exactly where you are. 👋">Hi, I'm Ace! I'll teach you anything, starting exactly where you are. 👋</div>
       </div>
     </div>
   </header>
 
   <div class="subjects">
     <div class="wrap">
-      <p>Ready-made tracks — or any subject you name</p>
+      <p>Start with a ready-made path, or name any subject you want to learn</p>
       <div class="chips">
         <span class="chip">☕ Java &amp; Spring Boot</span>
         <span class="chip">🤖 Agentic AI</span>
@@ -325,128 +378,148 @@
     <div class="wrap">
       <div class="section-head">
         <span class="eyebrow">How it works</span>
-        <h2>From “where do I start?” to offer&#8209;ready</h2>
-        <p class="lead">No pre-written course. Claude writes every lesson for you and adapts as you go.</p>
+        <h2>Read it, question it, try it, keep going</h2>
+        <p class="lead">No pre-written course. Claude writes every lesson for you and adapts to every answer you give.</p>
       </div>
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          <h3>Tell Ace where you are</h3>
-          <p>Your role, experience, target job and how comfortable you are with each subject. Ace designs a 10-level roadmap whose Level 1 starts at your level — no re-learning what you already know.</p>
+          <h3>Start where you are</h3>
+          <p>Pick a subject and tell Ace how comfortable you are with it. Your Level 1 starts right there, so you never re-learn what you already know.</p>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <h3>Learn, try, practise</h3>
-          <p>Each lesson is a short read you can question, a hands-on warm-up, then adaptive questions. Every answer updates your mastery, so the next lesson targets your gaps.</p>
+          <h3>Learn by doing</h3>
+          <p>Each lesson is a short read you can question, a hands-on warm-up, then adaptive practice. Every answer updates your mastery, so the next lesson targets your gaps.</p>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          <h3>Interview with confidence</h3>
-          <p>Prep for a specific company from its job description, then run mock interviews that score you like a hiring panel — and keep climbing past level 10.</p>
+          <h3>Never stop climbing</h3>
+          <p>Spaced reviews keep what you've learned fresh, and when you finish level 10 Ace designs the next levels. Your path grows with you.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="features" style="padding-top: 20px">
+  <section id="tour" style="padding-top: 20px">
     <div class="wrap">
-      <div class="spot">
-        <div class="spot-text">
-          <span class="tag new">New</span>
-          <h2>Lessons you can question</h2>
-          <p class="lead">Every lesson opens with a short, textbook-style read written for your gaps. Stuck on a sentence? Highlight it.</p>
-          <ul class="ticks">
-            <li><b>Explain more, give an example, simplify</b> or show the <b>interview angle</b> — in one click</li>
-            <li>Or type your own question; Ace answers in a side panel that knows the whole lesson</li>
-            <li>Re-read the lesson any time, even in the middle of the quiz</li>
-          </ul>
-        </div>
-        <div class="window">
-          <div class="window-bar"><span></span><span></span><span></span></div>
-          <img src="assets/highlight-ask.jpg" width="1600" height="932" loading="lazy" alt="A highlighted sentence in a lesson with the Ask Ace menu: Explain more, Example, Simplify, Interview angle." />
-        </div>
+      <div class="section-head" style="margin-bottom: 20px">
+        <span class="eyebrow">Take the tour</span>
+        <h2>Let Ace show you around</h2>
+        <p class="lead">Keep scrolling. Ace zooms in on each screen and explains what you're looking at.</p>
       </div>
+      <div class="tour">
+        <div class="tour-steps">
+          <article class="tour-step active" data-shot="learn-path" data-label="Your path" data-focus="20,19,51,28"
+            data-say="This is your learning path. See the pill? Level 1 starts at your level (“Comfortable” here), so you never re-learn the basics. Hit Continue and I'll pick up right where you left off.">
+            <span class="tag">Your path</span>
+            <h3>A path that starts at your level</h3>
+            <p>Tell Ace how comfortable you are with a subject and your Level 1 is pitched right there. The next topic is always one click away.</p>
+          </article>
+          <article class="tour-step" data-shot="highlight-ask" data-label="Lesson" data-focus="24,10,34,31"
+            data-say="Stuck on a sentence? Highlight it and I pop up. I can explain it in depth, show an example, simplify it, or tell you how it's used in the real world.">
+            <span class="tag new">New</span>
+            <h3>Lessons you can question</h3>
+            <p>Every lesson opens with a short read written for your gaps. Highlight anything you don't get and ask Ace about it.</p>
+            <ul class="ticks">
+              <li><b>Explain more, example, simplify</b> in one click</li>
+              <li>Or ask your own question in a side panel that knows the lesson</li>
+            </ul>
+          </article>
+          <article class="tour-step" data-shot="warmup-steps" data-label="Hands-on warm-up" data-focus="24,36,52,40"
+            data-say="Before any questions, we practise together. Here I walk you through map.put(“kafka”, 1) one step at a time. Tap to reveal each step.">
+            <span class="tag new">New</span>
+            <h3>Learn by doing</h3>
+            <p>After the reading comes a hands-on warm-up: flashcards you flip, worked examples revealed step by step, and quick “predict what happens” checks.</p>
+          </article>
+          <article class="tour-step" data-shot="warmup-sort" data-label="Hands-on warm-up" data-focus="24,37,52,31"
+            data-say="Sort it out! Drop each item into the right bucket. Green means spot on, and the red one shows exactly what to rethink. None of this counts against you.">
+            <span class="tag new">New</span>
+            <h3>Play with the ideas</h3>
+            <p>Sorting challenges and instant feedback turn passive reading into active learning. Mistakes here are just part of learning.</p>
+          </article>
+          <article class="tour-step" data-shot="quiz-hint" data-label="Practice" data-focus="24,26,52,32"
+            data-say="Time to practise. Stuck? After a few seconds I unlock a hint. Give it a go on your own first: answers with a hint earn half XP.">
+            <span class="tag new">New</span>
+            <h3>Hints when you need them</h3>
+            <p>Seven question types, graded instantly. Open answers are reviewed by Claude for meaning, not wording. The hint button counts down so you try first.</p>
+          </article>
+          <article class="tour-step" data-shot="quiz-back" data-label="Practice" data-focus="24,10,52,51"
+            data-say="Want to look at an earlier answer? Press Previous and you'll see what you picked and why the right answer is right. Your current question waits exactly where you left it.">
+            <span class="tag new">New</span>
+            <h3>Go back any time</h3>
+            <p>Review any earlier answer mid-lesson, re-read the lesson in a side panel, and get wrong answers back for a second chance at the end.</p>
+          </article>
+          <article class="tour-step" data-shot="roadmap-full" data-label="Your path" data-focus="22,68,47,22"
+            data-say="And when you finish level 10? The path keeps going. I design levels 11, 12, 13… around what you've mastered and where you're still shaky. Learning never runs out.">
+            <span class="tag new">New</span>
+            <h3>Learning with no ceiling</h3>
+            <p>Ten core levels take you from where you are to expert depth. Finish them and Ace keeps building: deeper internals, specialisations and what's new.</p>
+          </article>
+        </div>
 
-      <div class="spot flip">
-        <div class="spot-text">
-          <span class="tag new">New</span>
-          <h2>Learn by doing before you're tested</h2>
-          <p class="lead">Between the reading and the questions, a hands-on warm-up makes the ideas stick.</p>
-          <ul class="ticks">
-            <li><b>Flashcards</b> you answer in your head, then flip</li>
-            <li><b>Worked examples</b> revealed one step at a time</li>
-            <li><b>Quick checks</b> — “predict what happens” moments that don't count against you</li>
-            <li><b>Sort it out</b> challenges, like safe vs risky HashMap keys</li>
-          </ul>
-        </div>
-        <div class="stack">
+        <div class="tour-stage">
           <div class="window">
-            <div class="window-bar"><span></span><span></span><span></span></div>
-            <img src="assets/warmup-steps.jpg" width="1600" height="932" loading="lazy" alt="A worked example card stepping through HashMap.put with code and numbered steps." />
+            <div class="window-bar"><span></span><span></span><span></span><b class="tour-bar-label" data-tour-label>Your path</b></div>
+            <div class="tour-view">
+              <div class="tour-layer" data-tour-layer>
+                <img class="on" data-shot="learn-path" src="assets/learn-path.jpg" width="1600" height="932" alt="The learning path with a track that starts at the learner's level." />
+                <img data-shot="highlight-ask" src="assets/highlight-ask.jpg" width="1600" height="932" loading="lazy" alt="A highlighted sentence with the Ask Ace menu." />
+                <img data-shot="warmup-steps" src="assets/warmup-steps.jpg" width="1600" height="932" loading="lazy" alt="A worked example revealed step by step." />
+                <img data-shot="warmup-sort" src="assets/warmup-sort.jpg" width="1600" height="932" loading="lazy" alt="A sorting challenge with items in two buckets." />
+                <img data-shot="quiz-hint" src="assets/quiz-hint.jpg" width="1600" height="932" loading="lazy" alt="A practice question answered with a hint." />
+                <img data-shot="quiz-back" src="assets/quiz-back.jpg" width="1600" height="932" loading="lazy" alt="Reviewing an earlier answer." />
+                <img data-shot="roadmap-full" src="assets/roadmap-full.jpg" width="1600" height="932" loading="lazy" alt="The top of the path: Ace designs levels 11 to 13 after level 10." />
+              </div>
+              <div class="tour-ring" data-tour-ring></div>
+            </div>
           </div>
-          <div class="window">
-            <div class="window-bar"><span></span><span></span><span></span></div>
-            <img src="assets/warmup-sort.jpg" width="1600" height="932" loading="lazy" alt="A sorting card with items placed into Safe key and Risky key buckets, marked right and wrong." />
+          <div class="tour-guide" aria-hidden="true">
+            <div class="tour-track">
+              <div class="tour-ace-wrap" data-tour-ace>
+                <svg class="tour-ace" viewBox="0 0 120 124">
+                  <defs><linearGradient id="ace-body-2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a293ff"/><stop offset="1" stop-color="#5b41e2"/></linearGradient></defs>
+                  <ellipse cx="60" cy="118" rx="30" ry="4.5" fill="#1d1e33" opacity="0.12"/>
+                  <path d="M60 24 V8" stroke="#5b41e2" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M61.5 8 L77 12.5 L61.5 17 Z" fill="#ffb020"/>
+                  <path d="M24 72 Q15 80 19 90" stroke="#5e45e6" stroke-width="7" stroke-linecap="round" fill="none"/>
+                  <path d="M95 62 Q108 52 106 38" stroke="#5e45e6" stroke-width="7" stroke-linecap="round" fill="none"/>
+                  <path d="M60 24 C88 24 102 44 102 70 C102 96 84 110 60 110 C36 110 18 96 18 70 C18 44 32 24 60 24 Z" fill="url(#ace-body-2)"/>
+                  <ellipse cx="60" cy="88" rx="24" ry="16" fill="#fff" opacity="0.16"/>
+                  <ellipse cx="46" cy="60" rx="10.5" ry="12" fill="#fff"/>
+                  <ellipse cx="74" cy="60" rx="10.5" ry="12" fill="#fff"/>
+                  <g class="pupils">
+                    <circle cx="47" cy="62" r="5.2" fill="#1d1e33"/>
+                    <circle cx="75" cy="62" r="5.2" fill="#1d1e33"/>
+                    <circle cx="48.8" cy="59.8" r="1.7" fill="#fff"/>
+                    <circle cx="76.8" cy="59.8" r="1.7" fill="#fff"/>
+                  </g>
+                  <ellipse cx="35" cy="77" rx="5.5" ry="3.2" fill="#ff8fb1" opacity="0.65"/>
+                  <ellipse cx="85" cy="77" rx="5.5" ry="3.2" fill="#ff8fb1" opacity="0.65"/>
+                  <path d="M50 78 Q60 88 70 78" stroke="#1d1e33" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="tour-bubble" data-tour-bubble><span class="who">Ace</span><span data-tour-text>This is your learning path. See the pill? Level 1 starts at your level (“Comfortable” here), so you never re-learn the basics.</span></div>
           </div>
-        </div>
-      </div>
-
-      <div class="spot">
-        <div class="spot-text">
-          <span class="tag new">New</span>
-          <h2>Practise like Duolingo, think like an interviewer</h2>
-          <p class="lead">Seven question types, graded instantly — short answers are graded by Claude the way a real interviewer listens.</p>
-          <ul class="ticks">
-            <li><b>Hints unlock after a few seconds</b>, so you try first (hinted answers earn half XP)</li>
-            <li><b>Go back</b> to any earlier answer to review it — your current question stays as you left it</li>
-            <li>Wrong answers come back at the end for a <b>second chance</b></li>
-            <li>Multiple choice, select-all, true/false, fill-in-the-blanks, short answer, ordering and match pairs</li>
-          </ul>
-        </div>
-        <div class="stack">
-          <div class="window">
-            <div class="window-bar"><span></span><span></span><span></span></div>
-            <img src="assets/quiz-hint.jpg" width="1600" height="932" loading="lazy" alt="A true/false question answered correctly after revealing a hint, marked 'With a hint · half XP'." />
-          </div>
-          <div class="window">
-            <div class="window-bar"><span></span><span></span><span></span></div>
-            <img src="assets/quiz-back.jpg" width="1600" height="932" loading="lazy" alt="Reviewing an earlier multiple-choice answer, with the correct answer highlighted." />
-          </div>
-        </div>
-      </div>
-
-      <div class="spot flip">
-        <div class="spot-text">
-          <span class="tag new">New</span>
-          <h2>A roadmap with no ceiling</h2>
-          <p class="lead">Ten levels from where you are today to expert, architect-level depth. Finish them and Ace keeps going.</p>
-          <ul class="ticks">
-            <li>Everyone starts at <b>Level 1</b> — pitched at “New to it”, “Comfortable” or “Advanced”</li>
-            <li>Test out of any level with its <b>checkpoint</b></li>
-            <li>After level 10, Ace designs <b>levels 11, 12, 13…</b> around what you've mastered and where you're still weak</li>
-            <li>The coach can add a <b>remedial topic</b> to your path when it spots a missing prerequisite</li>
-          </ul>
-        </div>
-        <div class="window" style="max-width: 560px; justify-self: center">
-          <div class="window-bar"><span></span><span></span><span></span></div>
-          <img src="assets/roadmap-end.jpg" width="840" height="840" loading="lazy" alt="The top of a roadmap: level 10 with a card saying Ace designs levels 11 to 13 once it is finished." />
+          <div class="tour-dots" data-tour-dots></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section style="padding-top: 30px">
+  <section style="padding-top: 40px">
     <div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Everything in one coach</span>
-        <h2>Built for the whole interview loop</h2>
+        <h2>Built to keep you learning</h2>
       </div>
       <div class="grid">
-        <div class="card"><div class="ico">🧠</div><h3>Adaptive engine</h3><p>Per-topic mastery and per-concept strength decide the next lesson's difficulty, question mix and review questions.</p></div>
+        <div class="card"><div class="ico">🧠</div><h3>Adaptive engine</h3><p>Per-topic mastery and per-concept strength decide each lesson's difficulty, question mix and review questions.</p></div>
         <div class="card"><div class="ico">🔁</div><h3>Spaced repetition</h3><p>Finished topics come back for review right before you'd forget them. Plus weak-spot drills, rapid fire and “fix my mistakes”.</p></div>
-        <div class="card"><div class="ico">🏢</div><h3>Company prep</h3><p>Paste a job description: Ace researches the company, maps your skill gaps and builds a day-by-day plan with likely questions.</p></div>
-        <div class="card"><div class="ico">🎤</div><h3>Mock interviews</h3><p>Technical, behavioral, system design or rapid fire — friendly or tough. Scored like a hiring panel, with ideal answers.</p></div>
+        <div class="card"><div class="ico">📚</div><h3>Any subject</h3><p>Ready-made paths for Java, Agentic AI, system design and more, or name any subject and Ace designs a path for it.</p></div>
         <div class="card"><div class="ico">💬</div><h3>AI coach chat</h3><p>Ask anything. The coach knows your progress, can search the web and hands you one-click practice sessions.</p></div>
+        <div class="card"><div class="ico">🎤</div><h3>Interview-ready too</h3><p>When it's time, paste a job description for a company-specific plan, then run mock interviews scored like a hiring panel.</p></div>
         <div class="card"><div class="ico">🔒</div><h3>Private by design</h3><p>Your progress lives on your computer. An API key, if you use one, is encrypted with your system's credential store.</p></div>
       </div>
     </div>
@@ -458,7 +531,7 @@
         <div class="section-head">
           <span class="eyebrow">Download</span>
           <h2>Start climbing today</h2>
-          <p class="lead">Install Ascend, sign in with Claude Code, and Ace designs your first roadmap in a minute or two.</p>
+          <p class="lead">Install Ascend, sign in with Claude Code, and Ace designs your first path in a minute or two.</p>
         </div>
         <div class="dl-grid">
           <div class="dl" data-platform="windows">
@@ -498,6 +571,10 @@
           </div>
         </div>
         <p class="version" data-version>Builds are published on <a href="https://github.com/kaushikappani/ascend/releases">GitHub Releases</a>.</p>
+        <div class="support">
+          <p>Ascend is a free download, built and maintained by one developer. If it helps you learn, you can support its development.</p>
+          <a class="btn btn-coffee" data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+        </div>
       </div>
     </div>
   </section>
@@ -511,19 +588,23 @@
       <div class="faq">
         <details>
           <summary>What do I need to use Ascend?</summary>
-          <p>A Claude Code sign-in (Pro, Max, Team or Enterprise) — run <code>claude</code> in a terminal and use <code>/login</code> — or an Anthropic API key, which you can add in Settings. Ascend bundles Claude Code, so there's nothing else to install.</p>
+          <p>A Claude Code sign-in (Pro, Max, Team or Enterprise; run <code>claude</code> in a terminal and use <code>/login</code>) or an Anthropic API key, which you can add in Settings. Ascend bundles Claude Code, so there's nothing else to install.</p>
         </details>
         <details>
           <summary>Does it cost anything to use?</summary>
-          <p>Ascend itself is a download from GitHub. Lessons, grading and interviews run on your own Claude account, so they count towards your plan's usage — or your API bill if you use a key. Settings shows how much it has used, and a lighter model or “Faster” mode stretches it further.</p>
+          <p>Ascend itself is a free download (if it helps you, you can <a data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">buy me a coffee</a>). Lessons, grading and practice run on your own Claude account, so they count towards your plan's usage, or your API bill if you use a key. Settings shows how much it has used, and a lighter model or “Faster” mode stretches it further.</p>
         </details>
         <details>
-          <summary>I already know the basics — do I have to start from scratch?</summary>
+          <summary>I already know the basics. Do I have to start from scratch?</summary>
           <p>No. Tell Ace you're “Comfortable” or “Advanced” and your Level 1 starts there, skipping what you already know. You can also test out of any level by passing its checkpoint.</p>
         </details>
         <details>
           <summary>What happens after level 10?</summary>
-          <p>Your roadmap keeps growing. The first 10 levels are the core path; once you finish them, Ace designs the next levels — deeper internals, specialisations and current practice — around what you've mastered and where you're still weak.</p>
+          <p>Your path keeps growing. The first 10 levels are the core path; once you finish them, Ace designs the next levels (deeper internals, specialisations and current practice) around what you've mastered and where you're still weak.</p>
+        </details>
+        <details>
+          <summary>Can I use it to prepare for interviews?</summary>
+          <p>Yes. Paste a job description and Ace researches the company, maps your skill gaps and builds a day-by-day plan. Mock interviews (technical, behavioral, system design or rapid fire) are scored like a hiring panel, with ideal answers.</p>
         </details>
         <details>
           <summary>Where is my data stored?</summary>
@@ -540,10 +621,11 @@
   <footer>
     <div class="wrap">
       <a class="brand" href="#top" style="font-size: 18px"><img src="assets/logo.svg" alt="" style="width: 28px; height: 28px" />Ascend</a>
-      <span>AI interview coach, powered by Claude</span>
+      <span>AI learning coach, powered by Claude</span>
       <span style="margin-left: auto; display: flex; gap: 22px; flex-wrap: wrap">
         <a href="https://github.com/kaushikappani/ascend">Source on GitHub</a>
         <a href="https://github.com/kaushikappani/ascend/releases">All releases</a>
+        <a data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">☕ Buy me a coffee</a>
         <span>© 2026 Appani Kaushik</span>
       </span>
     </div>
@@ -552,19 +634,124 @@
   <script>
     (function () {
       var REPO = 'kaushikappani/ascend';
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Ace "types" what he says, one character at a time.
+      function typeInto(el, text) {
+        if (el._typing) clearTimeout(el._typing);
+        if (reduceMotion) {
+          el.textContent = text;
+          return;
+        }
+        var chars = Array.from(text);
+        var i = 0;
+        el.textContent = '';
+        el.classList.add('typing');
+        (function tick() {
+          el.textContent += chars[i++];
+          if (i < chars.length) el._typing = setTimeout(tick, chars[i - 1] === ' ' ? 12 : 17);
+          else {
+            el.classList.remove('typing');
+            el._typing = null;
+          }
+        })();
+      }
+
+      var heroBubble = document.querySelector('.bubble[data-type]');
+      if (heroBubble) setTimeout(function () { typeInto(heroBubble, heroBubble.dataset.type); }, 500);
+
+      // ---------------------------------------------------------------------
+      // Scroll tour: the pinned screenshot zooms to what Ace is explaining.
+      // ---------------------------------------------------------------------
+      var steps = Array.prototype.slice.call(document.querySelectorAll('.tour-step'));
+      var stage = document.querySelector('.tour-stage');
+      var layer = document.querySelector('[data-tour-layer]');
+      var ring = document.querySelector('[data-tour-ring]');
+      var aceWrap = document.querySelector('[data-tour-ace]');
+      var ace = aceWrap.querySelector('.tour-ace');
+      var pupils = ace.querySelector('.pupils');
+      var bubble = document.querySelector('[data-tour-bubble]');
+      var text = document.querySelector('[data-tour-text]');
+      var label = document.querySelector('[data-tour-label]');
+      var dots = document.querySelector('[data-tour-dots]');
+      var shots = {};
+      Array.prototype.forEach.call(layer.querySelectorAll('img'), function (img) { shots[img.dataset.shot] = img; });
+      steps.forEach(function () { dots.appendChild(document.createElement('span')); });
+      var active = -1;
+
+      function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+      function show(index) {
+        if (index === active) return;
+        active = index;
+        var step = steps[index];
+        steps.forEach(function (s, i) { s.classList.toggle('active', i === index); });
+        Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle('on', i === index); });
+
+        // Swap the screenshot and zoom/pan so the focus area fills the window.
+        Object.keys(shots).forEach(function (k) { shots[k].classList.toggle('on', k === step.dataset.shot); });
+        label.textContent = step.dataset.label;
+        var f = step.dataset.focus.split(',').map(Number); // x, y, w, h in % of the screenshot
+        var scale = clamp(Math.min(100 / (f[2] * 1.18), 100 / (f[3] * 1.18)), 1, 2.3);
+        var tx = clamp(50 - (f[0] + f[2] / 2) * scale, 100 - 100 * scale, 0);
+        var ty = clamp(50 - (f[1] + f[3] / 2) * scale, 100 - 100 * scale, 0);
+        layer.style.transform = 'translate(' + tx + '%, ' + ty + '%) scale(' + scale + ')';
+        var left = f[0] * scale + tx, top = f[1] * scale + ty, width = f[2] * scale, height = f[3] * scale;
+        ring.style.left = left + '%';
+        ring.style.top = top + '%';
+        ring.style.width = width + '%';
+        ring.style.height = height + '%';
+
+        // Ace walks to a corner of the spotlight (alternating sides), looks up at it and explains it.
+        var center = left + width / 2;
+        var aceX = clamp(index % 2 === 0 ? left + width * 0.15 : left + width * 0.85, 8, 92);
+        aceWrap.style.left = aceX + '%';
+        bubble.style.setProperty('--tail', aceX + '%');
+        var look = clamp((center - aceX) / 6, -3, 3);
+        pupils.style.transform = 'translate(' + look + 'px, -3px)';
+        if (!reduceMotion) {
+          ace.classList.remove('hop');
+          void ace.offsetWidth; // restart the animation
+          ace.classList.add('hop');
+        }
+        typeInto(text, step.dataset.say);
+      }
+
+      // The step crossing the reading line (middle of the space below the pinned stage) is the active one.
+      var ticking = false;
+      function update() {
+        ticking = false;
+        var stacked = window.innerWidth <= 960;
+        var top = stacked ? stage.getBoundingClientRect().bottom : 0;
+        var line = top + (window.innerHeight - top) * (stacked ? 0.45 : 0.5);
+        var best = 0, bestDist = Infinity;
+        steps.forEach(function (s, i) {
+          var r = s.getBoundingClientRect();
+          var d = line < r.top ? r.top - line : line > r.bottom ? line - r.bottom : 0;
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        show(best);
+      }
+      function onScroll() {
+        if (!ticking) { ticking = true; requestAnimationFrame(update); }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      show(0);
+
+      // ---------------------------------------------------------------------
+      // Downloads: point at this visitor's build and show the latest version.
+      // ---------------------------------------------------------------------
       var ua = navigator.userAgent || '';
       var os = /Mac|iPhone|iPad/.test(ua) ? 'mac' : /Win/.test(ua) ? 'windows' : null;
-
-      // Point the hero button at this visitor's build and highlight their card.
       var primary = document.querySelector('[data-download="primary"]');
-      var label = document.querySelector('[data-download-label]');
+      var dlLabel = document.querySelector('[data-download-label]');
       if (os) {
         var card = document.querySelector('.dl[data-platform="' + os + '"]');
         card.classList.add('recommended');
         primary.href = card.querySelector('.btn').href;
-        label.textContent = os === 'mac' ? 'Download for Mac' : 'Download for Windows';
+        dlLabel.textContent = os === 'mac' ? 'Download for Mac' : 'Download for Windows';
       }
-
       // Chromium on Intel Macs reports its architecture; default to Apple Silicon otherwise.
       if (os === 'mac' && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
         navigator.userAgentData.getHighEntropyValues(['architecture']).then(function (v) {
@@ -577,8 +764,15 @@
           primary.href = macBtn.href;
         }).catch(function () {});
       }
+      // Coffee buttons open the Buy Me a Coffee popup in the page; the plain link is only a fallback.
+      document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('[data-bmc]');
+        var widget = link && document.getElementById('bmc-wbtn');
+        if (!widget) return;
+        e.preventDefault();
+        widget.click();
+      });
 
-      // Show the latest version straight from GitHub Releases.
       fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (rel) {
@@ -591,5 +785,7 @@
         .catch(function () {});
     })();
   </script>
+  <!-- Buy Me a Coffee floating button (bottom right). -->
+  <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="appanikaushik" data-description="Support me on Buy me a coffee!" data-message="" data-color="#5F7FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 </body>
 </html>
