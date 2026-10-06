@@ -4,10 +4,11 @@ import { addDays, currentLevelNumber, dayKey } from '@shared/progress';
 import type { AnswerResult, AppData, Question } from '@shared/types';
 import { nowIso } from '../util';
 
-export function xpForAnswer(q: Question, r: AnswerResult): number {
+export function xpForAnswer(q: Question, r: AnswerResult, hintUsed = false): number {
   if (r.verdict === 'incorrect') return 0;
   const base = 4 + 2 * q.difficulty;
-  return r.verdict === 'correct' ? base : Math.round(base / 2);
+  const xp = r.verdict === 'correct' ? base : Math.round(base / 2);
+  return hintUsed ? Math.ceil(xp / 2) : xp;
 }
 
 function touchStreak(d: AppData, day: string): void {
@@ -67,6 +68,7 @@ export function checkAchievements(d: AppData): string[] {
   grant('level_3', maxLevel >= 3);
   grant('level_6', maxLevel >= 6);
   grant('level_10', maxLevel >= 10);
+  grant('beyond', maxLevel >= 11);
   grant('gatekeeper', Object.values(d.trackProgress).some((tp) => Object.values(tp.checkpoints).some((c) => c.passed)));
   grant('deep_diver', Object.values(d.topicProgress).some((p) => p.mastery >= MASTERED));
   grant('centurion', s.questionsAnswered >= 100);

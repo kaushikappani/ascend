@@ -27,7 +27,8 @@ export interface NewTrackInput {
   emoji: string;
   color: string;
   tagline?: string;
-  startLevel: number;
+  /** Self-assessed starting point (1-10). The roadmap's level 1 is pitched here; everyone starts at level 1. */
+  proficiency?: number;
   kind?: TrackKind;
 }
 
@@ -54,6 +55,8 @@ export interface AnswerInput {
   timeMs: number;
   /** Second attempt during the mistake-review round: graded, but not recorded. */
   retry?: boolean;
+  /** The learner revealed the hint first. */
+  hintUsed?: boolean;
 }
 
 export interface NewTargetInput {
@@ -114,6 +117,8 @@ export interface Rpc {
     remove(trackId: string): Promise<void>;
     setActive(trackId: string): Promise<void>;
     setStartLevel(trackId: string, level: number): Promise<void>;
+    /** Design the next few levels once the last one is complete. */
+    extend(trackId: string): Promise<void>;
   };
   lessons: {
     start(input: StartLessonInput): Promise<string>;
@@ -170,7 +175,7 @@ export const RPC_METHODS = {
   profile: ['update'],
   settings: ['update'],
   onboarding: ['complete'],
-  tracks: ['create', 'regenerate', 'remove', 'setActive', 'setStartLevel'],
+  tracks: ['create', 'regenerate', 'remove', 'setActive', 'setStartLevel', 'extend'],
   lessons: ['start', 'get', 'begin', 'answer', 'warmGrader', 'complete', 'abandon', 'retry'],
   practice: ['mistakes', 'resolveMistake', 'history'],
   targets: ['create', 'retry', 'remove', 'setActive'],

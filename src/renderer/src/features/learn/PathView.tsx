@@ -1,9 +1,11 @@
-import { Check, Crown, Lock, MessageCircle, Play, RotateCcw, Sparkles, Star, Trophy, X } from 'lucide-react';
+import { Check, Crown, Lock, MessageCircle, Mountain, Play, Plus, RotateCcw, Sparkles, Star, Trophy, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CHECKPOINT_PASS_SCORE, MASTERED } from '@shared/constants';
-import { dayKey, isLevelComplete, isLevelUnlocked, masteryLabel, nextTopic } from '@shared/progress';
+import { CHECKPOINT_PASS_SCORE, CORE_LEVELS, EXTEND_LEVELS, MASTERED, MAX_LEVELS } from '@shared/constants';
+import { canExtendTrack, dayKey, isLevelComplete, isLevelUnlocked, masteryLabel, nextTopic } from '@shared/progress';
 import type { AppSnapshot, Level, Topic, Track } from '@shared/types';
+import { ActivityFeed, useJobs } from '../../components/AgentActivity';
+import { Mascot } from '../../components/Mascot';
 import { Badge, Button, ProgressBar } from '../../components/ui';
 import { api } from '../../lib/api';
 import { cn, fmtDate, relTime } from '../../lib/format';
@@ -248,6 +250,67 @@ function LevelHeader({ track, level, unlocked, complete, jumpable, snapshot }: {
   );
 }
 
+/** The top of the path: once the last level is done the roadmap keeps growing. */
+function RoadmapEnd({ track, snapshot }: { track: Track; snapshot: AppSnapshot }) {
+  const jobs = useJobs(track.id, ['roadmap']);
+  const extending = jobs.some((j) => j.status === 'running');
+  const failed = !extending && jobs.at(-1)?.status === 'error';
+  const finished = canExtendTrack(track, snapshot.topicProgress, snapshot.trackProgress);
+  const from = track.levels.length + 1;
+  const to = Math.min(MAX_LEVELS, from + EXTEND_LEVELS - 1);
+  const atCap = track.levels.length >= MAX_LEVELS;
+  return (
+    <div
+      data-roadmap-end={extending ? 'extending' : finished ? 'ready' : 'locked'}
+      className={cn('flex flex-col items-center gap-4 rounded-3xl border-2 border-dashed px-6 py-7 text-center', finished ? 'border-transparent bg-elev shadow-pop' : 'border-line')}
+      style={finished ? { borderColor: track.color } : undefined}
+    >
+      {extending ? (
+        <>
+          <Mascot mood="thinking" size={84} />
+          <div>
+            <div className="text-lg font-black">Designing levels {from}–{to}…</div>
+            <div className="mt-0.5 text-sm font-semibold text-muted">Going past what you've covered, and back over your weak spots at a harder angle.</div>
+          </div>
+          <ActivityFeed jobs={jobs.filter((j) => j.status === 'running')} max={3} compact className="w-full max-w-sm text-left" />
+        </>
+      ) : finished ? (
+        <>
+          <Mascot mood="celebrate" size={90} />
+          <div>
+            <div className="text-xl font-black">You've reached the top of this roadmap 🏔️</div>
+            <div className="mt-1 text-sm font-semibold text-muted">
+              {atCap ? 'This track is as long as it gets — start a new track to keep going.' : "Learning has no ceiling. I'll design the next levels around what you've mastered."}
+            </div>
+            {failed && <div className="mt-2 text-sm font-bold text-bad-ink">{jobs.at(-1)?.error}</div>}
+          </div>
+          {!atCap && (
+            <Button
+              caps
+              size="lg"
+              icon={failed ? <RotateCcw className="size-5" /> : <Plus className="size-5" />}
+              style={{ background: track.color, boxShadow: `0 4px 0 ${deep(track.color)}`, ['--press-shadow' as string]: deep(track.color) }}
+              onClick={() => void attempt("Couldn't extend the roadmap", () => api.tracks.extend(track.id))}
+            >
+              {failed ? 'Try again' : `Add levels ${from}–${to}`}
+            </Button>
+          )}
+        </>
+      ) : (
+        <>
+          <Mountain className="size-9 text-faint" />
+          <div>
+            <div className="text-[15px] font-black text-muted">The path keeps going</div>
+            <div className="mt-0.5 text-[13px] font-semibold text-faint">
+              Finish level {track.levels.length} and Ace designs levels {from}–{to} for you — learning never runs out.
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function PathView({ track, snapshot }: { track: Track; snapshot: AppSnapshot }) {
   const [selected, setSelected] = useState<string | null>(null);
   const tp = snapshot.topicProgress;
@@ -334,6 +397,8 @@ export function PathView({ track, snapshot }: { track: Track; snapshot: AppSnaps
           </section>
         );
       })}
+      {/* The first 10 levels are mandatory; the path only grows past them. */}
+      {track.kind !== 'target' && track.levels.length >= CORE_LEVELS && <RoadmapEnd track={track} snapshot={snapshot} />}
     </div>
   );
 }

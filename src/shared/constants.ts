@@ -1,4 +1,4 @@
-import type { ModelOption, QuestionType, Settings } from './types';
+import type { LearnCardType, ModelOption, QuestionType, Settings } from './types';
 
 export const APP_NAME = 'Ascend';
 export const DATA_VERSION = 2;
@@ -127,6 +127,30 @@ export const START_LEVEL_OPTIONS = [
   { level: 7, label: 'Advanced', hint: 'Senior-level depth' },
 ];
 
+/** The self-placement option closest to a level (tracks store the number). */
+export function startLevelOption(level: number): (typeof START_LEVEL_OPTIONS)[number] {
+  return START_LEVEL_OPTIONS.reduce((best, o) => (Math.abs(o.level - level) < Math.abs(best.level - level) ? o : best));
+}
+
+/** Every core roadmap has these mandatory levels; only once all of them are done can it grow further. */
+export const CORE_LEVELS = 10;
+
+/** Levels added each time a finished roadmap is extended, and the overall cap. */
+export const EXTEND_LEVELS = 3;
+export const MAX_LEVELS = 40;
+
+/** Seconds a question must be on screen before its hint can be revealed. */
+export const HINT_DELAY_SECONDS = 12;
+
+export const LEARN_CARD_TYPES: LearnCardType[] = ['flashcard', 'steps', 'quick_check', 'sort'];
+
+export const LEARN_CARD_META: Record<LearnCardType, { label: string; emoji: string }> = {
+  flashcard: { label: 'Flashcard', emoji: '🃏' },
+  steps: { label: 'Worked example', emoji: '🧭' },
+  quick_check: { label: 'Quick check', emoji: '⚡' },
+  sort: { label: 'Sort it out', emoji: '🗂️' },
+};
+
 export const DAILY_GOALS = [
   { xp: 20, label: 'Casual', hint: '~5 min / day' },
   { xp: 50, label: 'Regular', hint: '~15 min / day' },
@@ -153,6 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
   research: 'smart',
   lessonLength: 8,
   primer: 'standard',
+  walkthrough: true,
   questionTypes: {
     mcq: true,
     multi_select: true,
@@ -191,6 +216,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'level_3', title: 'Climber', description: 'Unlock level 3 in any track', emoji: '🧗' },
   { id: 'level_6', title: 'Halfway Up', description: 'Unlock level 6 in any track', emoji: '⛰️' },
   { id: 'level_10', title: 'Summit', description: 'Unlock level 10 in any track', emoji: '🏔️' },
+  { id: 'beyond', title: 'Beyond the Summit', description: 'Unlock a level past 10', emoji: '🌌' },
   { id: 'gatekeeper', title: 'Gatekeeper', description: 'Pass a level checkpoint', emoji: '🏆' },
   { id: 'deep_diver', title: 'Deep Diver', description: 'Reach 85% mastery on a topic', emoji: '🌊' },
   { id: 'centurion', title: 'Centurion', description: 'Answer 100 questions', emoji: '💯' },

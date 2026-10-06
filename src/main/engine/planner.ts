@@ -13,10 +13,9 @@ const PATTERNS: Record<LessonKind, QuestionType[]> = {
   rapid: ['mcq', 'true_false', 'mcq', 'mcq', 'true_false', 'mcq', 'true_false', 'mcq', 'mcq', 'true_false', 'mcq', 'true_false'],
 };
 
-/** Center difficulty (1-5) from the level and the learner's mastery. */
-export function centerDifficulty(levelNumber: number, levelCount: number, mastery: number, attempts: number): number {
-  const rel = levelCount > 1 ? (levelNumber - 1) / (levelCount - 1) : 0.5;
-  let center = 1.3 + rel * 3.2;
+/** Center difficulty (1-5) from how deep the level is (0-1, see levelDepth) and the learner's mastery. */
+export function centerDifficulty(depth: number, mastery: number, attempts: number): number {
+  let center = 1.3 + clamp(depth, 0, 1) * 3.2;
   if (attempts >= 4) {
     if (mastery >= 75) center += 0.7;
     else if (mastery < 35) center -= 0.7;

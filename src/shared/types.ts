@@ -79,6 +79,8 @@ export interface AnswerRecord {
   result: AnswerResult;
   timeMs: number;
   at: ISODate;
+  /** The learner revealed the hint before answering (half XP, weaker mastery evidence). */
+  hintUsed?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +118,12 @@ export interface Track {
   levels: Level[];
   /** Levels up to this number are unlocked from the start (self-placement). */
   startLevel: number;
+  /**
+   * Where level 1 of this roadmap sits on the absolute 1-10 scale: the learner's self-assessed
+   * starting point, so a "Comfortable" learner's level 1 already assumes working knowledge.
+   * Unset for roadmaps designed before calibration (level 1 = absolute foundations).
+   */
+  baseLevel?: number;
   status: 'generating' | 'ready' | 'error';
   error?: string;
   targetId?: string;
@@ -193,9 +201,36 @@ export interface LessonResult {
   masteryAfter: number;
   passed: boolean;
   levelUnlocked?: number;
+  /** This lesson finished the roadmap's last level; more levels are being designed. */
+  trackCompleted?: boolean;
   achievements: string[];
   goalReached?: boolean;
   debrief?: Debrief;
+}
+
+// ---------------------------------------------------------------------------
+// Hands-on walkthrough (interactive cards between the primer and the questions)
+// ---------------------------------------------------------------------------
+
+export type LearnCardType = 'flashcard' | 'steps' | 'quick_check' | 'sort';
+
+/** One interactive learning card. Ungraded: it prepares the learner for the questions. */
+export interface LearnCard {
+  id: string;
+  type: LearnCardType;
+  title: string;
+  /** Markdown. flashcard: the recall prompt; steps: the scenario; quick_check: the question; sort: the instruction. */
+  prompt: string;
+  code?: string;
+  codeLanguage?: string;
+  answer?: string; // flashcard: revealed on the back
+  steps?: string[]; // steps: revealed one at a time
+  options?: string[]; // quick_check
+  correctIndex?: number; // quick_check
+  buckets?: string[]; // sort: exactly two bucket names
+  items?: { text: string; bucket: number }[]; // sort
+  /** Takeaway shown once the learner has interacted. */
+  explanation?: string;
 }
 
 export interface Source {
@@ -214,6 +249,8 @@ export interface Lesson {
   focus?: string;
   primer?: string;
   primerStatus: GenStatus;
+  walkthrough?: LearnCard[];
+  walkthroughStatus: GenStatus;
   questions: Question[];
   questionsStatus: GenStatus;
   error?: string;
@@ -234,7 +271,7 @@ export interface Lesson {
 }
 
 /** Lightweight lesson row included in snapshots. */
-export type LessonSummary = Omit<Lesson, 'primer' | 'questions' | 'answers'> & { questionCount: number; answeredCount: number };
+export type LessonSummary = Omit<Lesson, 'primer' | 'walkthrough' | 'questions' | 'answers'> & { questionCount: number; answeredCount: number };
 
 export interface Attempt {
   id: string;
@@ -253,6 +290,7 @@ export interface Attempt {
   correctAnswerText: string;
   explanation: string;
   at: ISODate;
+  hintUsed?: boolean;
   resolved?: boolean;
   question?: Question;
 }
@@ -439,6 +477,8 @@ export interface Settings {
   research: ResearchMode;
   lessonLength: number;
   primer: PrimerDepth;
+  /** Hands-on walkthrough between the primer and the questions. */
+  walkthrough: boolean;
   questionTypes: Record<QuestionType, boolean>;
   dailyGoalXp: number;
   sound: boolean;
@@ -505,6 +545,7 @@ export type JobKind =
   | 'connection'
   | 'roadmap'
   | 'primer'
+  | 'walkthrough'
   | 'questions'
   | 'grade'
   | 'debrief'

@@ -1,5 +1,5 @@
 // Pure progress derivations shared by the main process and the renderer.
-import { MASTERED } from './constants';
+import { CORE_LEVELS, MASTERED } from './constants';
 import type { DayKey, Level, Topic, TopicProgress, Track, TrackProgress } from './types';
 
 type TopicMap = Record<string, TopicProgress>;
@@ -39,6 +39,32 @@ export function isLevelUnlocked(track: Track, levelNumber: number, topics: Topic
   const prev = track.levels.find((l) => l.number === levelNumber - 1);
   if (!prev) return false;
   return isLevelComplete(track, prev, topics, trackProgress) && isLevelUnlocked(track, prev.number, topics, trackProgress);
+}
+
+/** Every level of the roadmap is done. */
+export function isTrackFinished(track: Track, topics: TopicMap, trackProgress: TrackProgressMap): boolean {
+  const last = track.levels.at(-1);
+  return !!last && isLevelComplete(track, last, topics, trackProgress) && isLevelUnlocked(track, last.number, topics, trackProgress);
+}
+
+/** A core roadmap grows only after its mandatory first 10 levels (and any added since) are all done. */
+export function canExtendTrack(track: Track, topics: TopicMap, trackProgress: TrackProgressMap): boolean {
+  return track.kind !== 'target' && track.levels.length >= CORE_LEVELS && isTrackFinished(track, topics, trackProgress);
+}
+
+/**
+ * How deep a level sits from foundations (0) to expert (1). Core roadmaps are measured on the
+ * absolute 1-10 scale, so a calibrated roadmap (baseLevel 5) starts mid-way and levels added
+ * past 10 stay at full depth; company prep paths spread their stages over the whole range.
+ */
+export function levelDepth(track: Track, levelNumber: number): number {
+  if (track.kind === 'target') {
+    const count = track.levels.length;
+    return count > 1 ? (levelNumber - 1) / (count - 1) : 0.5;
+  }
+  const base = Math.min(10, Math.max(1, track.baseLevel ?? 1));
+  const absolute = base + ((levelNumber - 1) * (10 - base)) / 9;
+  return Math.min(1, Math.max(0, (absolute - 1) / 9));
 }
 
 /** Highest unlocked level number. */

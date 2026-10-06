@@ -15,7 +15,7 @@ export function AddTrackModal({ open, onClose }: { open: boolean; onClose: () =>
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [emoji, setEmoji] = useState('📘');
-  const [startLevel, setStartLevel] = useState(1);
+  const [proficiency, setProficiency] = useState(1);
   const [busy, setBusy] = useState(false);
   const existing = new Set(snapshot?.tracks.map((t) => t.title.toLowerCase()) ?? []);
   const presets = TRACK_PRESETS.filter((p) => !existing.has(p.title.toLowerCase()));
@@ -32,7 +32,7 @@ export function AddTrackModal({ open, onClose }: { open: boolean; onClose: () =>
         emoji: chosen?.emoji ?? emoji,
         color,
         tagline: chosen?.tagline,
-        startLevel,
+        proficiency,
         kind: chosen ? 'core' : 'custom',
       }),
     );
@@ -113,8 +113,10 @@ export function AddTrackModal({ open, onClose }: { open: boolean; onClose: () =>
       </div>
       <div className="mt-5">
         <Label>Where are you starting from?</Label>
-        <Segmented value={startLevel} onChange={setStartLevel} options={START_LEVEL_OPTIONS.map((o) => ({ value: o.level, label: o.label, hint: o.hint }))} />
-        <p className="mt-2 text-xs font-semibold text-faint">Levels below your start stay open for practice. You can always test out of a level with its checkpoint.</p>
+        <Segmented value={proficiency} onChange={setProficiency} options={START_LEVEL_OPTIONS.map((o) => ({ value: o.level, label: o.label, hint: o.hint }))} />
+        <p className="mt-2 text-xs font-semibold text-faint">
+          You always start at Level 1 — Claude pitches Level 1 at this point, so you skip what you already know. You can test out of any level with its checkpoint.
+        </p>
       </div>
     </Modal>
   );

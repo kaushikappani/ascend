@@ -1,6 +1,7 @@
 import { AlertTriangle, EllipsisVertical, Play, Plus, RefreshCw, Signal, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { startLevelOption } from '@shared/constants';
 import { nextTopic, trackStats } from '@shared/progress';
 import type { AppSnapshot, Track } from '@shared/types';
 import { ActivityFeed, useJobs } from '../../components/AgentActivity';
@@ -58,7 +59,9 @@ function StartLevelModal({ track, open, onClose }: { track: Track; open: boolean
       open={open}
       onClose={onClose}
       title="Where do you want to start?"
-      subtitle={`${track.title}: levels up to your starting level are open; later levels unlock as you finish each one (or pass its checkpoint). Your progress is kept.`}
+      subtitle={`${track.title}: levels up to the one you pick are open; later levels unlock as you finish each one (or pass its checkpoint). Your progress is kept.${
+        (track.baseLevel ?? 1) > 1 ? ` Level 1 is already pitched at your level (${startLevelOption(track.baseLevel ?? 1).label}), so most people start there.` : ''
+      }`}
       width={560}
       footer={
         <>
@@ -127,7 +130,7 @@ function TrackMenu({ track }: { track: Track }) {
       <ConfirmModal
         open={confirm === 'regen'}
         title="Redesign this roadmap?"
-        body="Claude will design a fresh 10-level roadmap using everything it knows about you now. Progress on this track's current topics will be reset."
+        body="Claude will design a fresh 10-level roadmap, starting at your level and using everything it knows about you now. Progress on this track's current topics will be reset."
         confirmLabel="Redesign"
         onConfirm={() => void attempt("Couldn't redesign", () => api.tracks.regenerate(track.id))}
         onClose={() => setConfirm(null)}
@@ -158,7 +161,14 @@ function TrackHeader({ track, snapshot }: { track: Track; snapshot: AppSnapshot 
       <div className="relative flex items-start gap-4">
         <div className="flex size-16 shrink-0 items-center justify-center rounded-3xl bg-white/20 text-4xl">{track.emoji}</div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-2xl leading-tight font-black">{track.title}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-2xl leading-tight font-black">{track.title}</h2>
+            {(track.baseLevel ?? 1) > 1 && (
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11.5px] font-black tracking-wide" title="Level 1 of this roadmap is pitched at your starting point">
+                Starts at your level · {startLevelOption(track.baseLevel ?? 1).label}
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-sm font-semibold opacity-90">{track.tagline}</p>
           {track.status === 'ready' && (
             <div className="mt-3 flex items-center gap-3">
@@ -198,7 +208,7 @@ function Generating({ track }: { track: Track }) {
         <Mascot mood="thinking" size={104} />
         <SpeechBubble>
           Designing your {track.title} roadmap…
-          <div className="mt-1 text-[13px] font-semibold text-muted">10 levels, from foundations to expert interview depth.</div>
+          <div className="mt-1 text-[13px] font-semibold text-muted">10 levels, from where you are today to expert interview depth.</div>
         </SpeechBubble>
       </div>
       <ActivityFeed jobs={jobs} className="w-full max-w-md" />

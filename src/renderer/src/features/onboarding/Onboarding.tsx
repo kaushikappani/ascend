@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import type { NewTrackInput } from '@shared/api';
-import { DAILY_GOALS, FALLBACK_MODELS, START_LEVEL_OPTIONS, TRACK_COLORS, TRACK_PRESETS } from '@shared/constants';
+import { DAILY_GOALS, FALLBACK_MODELS, START_LEVEL_OPTIONS, startLevelOption, TRACK_COLORS, TRACK_PRESETS } from '@shared/constants';
 import { ActivityFeed, useJobs } from '../../components/AgentActivity';
 import { Logo, Mascot, SpeechBubble, type Mood } from '../../components/Mascot';
 import { Button, Chip, Input, Label, Segmented, Textarea } from '../../components/ui';
@@ -140,7 +140,11 @@ function BuildStep({ trackIds }: { trackIds: string[] }) {
                 <div className="min-w-0 flex-1">
                   <div className="font-black">{t.title}</div>
                   <div className="text-[13px] font-semibold text-muted">
-                    {t.status === 'ready' ? `${t.levels.length} levels · ${topicCount} topics · starting at level ${t.startLevel}` : t.status === 'error' ? t.error : 'Designing…'}
+                    {t.status === 'ready'
+                      ? `${t.levels.length} levels · ${topicCount} topics · Level 1 pitched at “${startLevelOption(t.baseLevel ?? 1).label}”`
+                      : t.status === 'error'
+                        ? t.error
+                        : 'Designing…'}
                   </div>
                 </div>
                 {t.status === 'ready' ? (
@@ -212,7 +216,7 @@ export function Onboarding() {
         emoji: p.emoji,
         color: p.color,
         tagline: p.tagline,
-        startLevel: levels[p.key] ?? defaultLevel,
+        proficiency: levels[p.key] ?? defaultLevel,
         kind: 'core' as const,
       })),
       ...custom.map((c, i) => ({
@@ -220,7 +224,7 @@ export function Onboarding() {
         subject: c.subject || c.title,
         emoji: '📘',
         color: TRACK_COLORS[(i + 3) % TRACK_COLORS.length],
-        startLevel: levels[`custom-${i}`] ?? defaultLevel,
+        proficiency: levels[`custom-${i}`] ?? defaultLevel,
         kind: 'custom' as const,
       })),
     ];
@@ -271,7 +275,7 @@ export function Onboarding() {
                     <>
                       Hi! I'm <span className="text-brand">Ace</span>, your AI interview coach.
                       <div className="mt-1 text-[13.5px] font-semibold text-muted">
-                        Powered by Claude Code, I design your roadmap from level 1 to 10, teach with bite-sized reads, quiz you Duolingo-style, and adapt to every answer — plus company-specific prep and mock interviews.
+                        Powered by Claude Code, I design a roadmap that starts at your level and keeps growing past level 10, teach with bite-sized reads and hands-on warm-ups, quiz you Duolingo-style, and adapt to every answer — plus company-specific prep and mock interviews.
                       </div>
                     </>
                   }
@@ -392,7 +396,7 @@ export function Onboarding() {
                 </StepShell>
               )}
               {step === 3 && (
-                <StepShell mood="thinking" bubble="Where are you starting from? Earlier levels stay open for practice, and you can test out of any level later.">
+                <StepShell mood="thinking" bubble="Where are you starting from? You'll always begin at Level 1 — I'll pitch Level 1 at exactly this point.">
                   <div className="flex flex-col gap-3">
                     {chosenTracks.map((t) => {
                       const level = levels[t.key] ?? defaultLevel;
@@ -402,7 +406,7 @@ export function Onboarding() {
                           <div className="min-w-0 flex-1">
                             <div className="font-black">{t.title}</div>
                             <div className="text-xs font-bold text-muted">
-                              {level === 1 ? 'Starts at Level 1 — from the very basics' : `Starts at Level ${level} · levels 1–${level - 1} stay open for review`}
+                              {level === 1 ? 'Level 1 starts from the very basics' : `Level 1 starts at “${startLevelOption(level).label}” depth — no re-learning what you know`}
                             </div>
                           </div>
                           <Segmented

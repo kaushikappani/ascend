@@ -10,6 +10,10 @@ export interface QuestionProps {
   onAnswer: (answer: UserAnswer | null) => void;
   /** Submit immediately (used by match, and Ctrl+Enter in short answers). */
   onSubmit: (answer?: UserAnswer) => void;
+  /** The answer to show selected (reviewing an earlier question). */
+  initial?: UserAnswer | null;
+  /** Hidden behind another view: keyboard shortcuts are off. */
+  paused?: boolean;
 }
 
 export type TileState = 'selected' | 'correct' | 'wrong' | 'dim' | 'missed' | undefined;

@@ -1,22 +1,30 @@
-import { AlertTriangle, BookOpen, ExternalLink, RotateCcw } from 'lucide-react';
+import { AlertTriangle, BookOpen, ExternalLink, Hand, Highlighter, RotateCcw } from 'lucide-react';
+import { useRef } from 'react';
 import type { JobInfo, Lesson } from '@shared/types';
 import { ActivityFeed } from '../../components/AgentActivity';
 import { Markdown } from '../../components/Markdown';
 import { Mascot } from '../../components/Mascot';
 import { Button, Spinner } from '../../components/ui';
 import { api } from '../../lib/api';
+import { SelectionAsk, type AskFn } from './SelectionAsk';
 
 export function PrimerView({
   lesson,
   text,
   jobs,
+  handsOn,
   onStart,
+  onAsk,
 }: {
   lesson: Lesson;
   text: string;
   jobs: JobInfo[];
+  /** A hands-on walkthrough comes next, so the learner can move on before the questions are ready. */
+  handsOn: boolean;
   onStart: () => void;
+  onAsk: AskFn;
 }) {
+  const articleRef = useRef<HTMLElement>(null);
   const streaming = lesson.primerStatus === 'streaming' || lesson.primerStatus === 'pending';
   const questionsReady = lesson.questionsStatus === 'ready';
   const questionsFailed = lesson.questionsStatus === 'error';
@@ -27,12 +35,19 @@ export function PrimerView({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <article className="mx-auto max-w-[780px] px-8 pt-8 pb-12">
+        <article ref={articleRef} className="mx-auto max-w-[780px] px-8 pt-8 pb-12">
           <div className="flex items-center gap-2 text-[12.5px] font-black tracking-wider text-brand uppercase">
             <BookOpen className="size-4" /> Quick read {lesson.subtitle ? `· ${lesson.subtitle}` : ''}
           </div>
           <h1 className="mt-1.5 text-[32px] leading-tight font-black">{lesson.title}</h1>
-          {text && <div className="mt-1 text-[13px] font-bold text-faint">~{Math.max(1, Math.round(words / 200))} min read · written for you by Claude</div>}
+          {text && (
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-bold text-faint">
+              <span>~{Math.max(1, Math.round(words / 200))} min read · written for you by Claude</span>
+              <span className="flex items-center gap-1 text-brand">
+                <Highlighter className="size-3.5" /> Highlight any part to ask Ace about it
+              </span>
+            </div>
+          )}
           {!text && streaming && (
             <div className="mt-8 flex flex-col gap-6">
               <div className="flex items-center gap-4">
@@ -66,6 +81,7 @@ export function PrimerView({
             </div>
           )}
         </article>
+        <SelectionAsk containerRef={articleRef} onAsk={onAsk} />
       </div>
       <div className="border-t-2 border-line bg-elev">
         <div className="mx-auto flex max-w-[900px] items-center gap-4 px-8 py-4">
@@ -90,6 +106,10 @@ export function PrimerView({
           {questionsFailed ? (
             <Button variant="secondary" icon={<RotateCcw className="size-4" />} onClick={() => void api.lessons.retry(lesson.id)}>
               Retry questions
+            </Button>
+          ) : handsOn ? (
+            <Button caps size="lg" icon={<Hand className="size-5" />} onClick={onStart}>
+              Try it hands-on
             </Button>
           ) : (
             <Button caps size="lg" disabled={!questionsReady} onClick={onStart}>

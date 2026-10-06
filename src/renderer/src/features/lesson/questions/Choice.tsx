@@ -5,8 +5,8 @@ import { cn } from '../../../lib/format';
 import { sfx } from '../../../lib/sound';
 import { OptionTile, useDigitKeys, type QuestionProps, type TileState } from './shared';
 
-export function McqQuestion({ q, locked, onAnswer }: QuestionProps) {
-  const [sel, setSel] = useState<number | null>(null);
+export function McqQuestion({ q, locked, onAnswer, initial, paused }: QuestionProps) {
+  const [sel, setSel] = useState<number | null>(initial?.type === 'mcq' ? initial.index : null);
   const options = q.options ?? [];
   const pick = useCallback(
     (i: number) => {
@@ -17,7 +17,7 @@ export function McqQuestion({ q, locked, onAnswer }: QuestionProps) {
     },
     [locked, onAnswer],
   );
-  useDigitKeys(options.length, pick, !locked);
+  useDigitKeys(options.length, pick, !locked && !paused);
   const stateOf = (i: number): TileState => {
     if (!locked) return sel === i ? 'selected' : undefined;
     if (i === q.correctIndex) return 'correct';
@@ -39,8 +39,8 @@ export function McqQuestion({ q, locked, onAnswer }: QuestionProps) {
   );
 }
 
-export function MultiSelectQuestion({ q, locked, onAnswer }: QuestionProps) {
-  const [sel, setSel] = useState<number[]>([]);
+export function MultiSelectQuestion({ q, locked, onAnswer, initial, paused }: QuestionProps) {
+  const [sel, setSel] = useState<number[]>(initial?.type === 'multi_select' ? initial.indices : []);
   const options = q.options ?? [];
   const correct = new Set(q.correctIndices ?? []);
   const toggle = useCallback(
@@ -53,7 +53,7 @@ export function MultiSelectQuestion({ q, locked, onAnswer }: QuestionProps) {
     },
     [locked, onAnswer, sel],
   );
-  useDigitKeys(options.length, toggle, !locked);
+  useDigitKeys(options.length, toggle, !locked && !paused);
   const stateOf = (i: number): TileState => {
     const chosen = sel.includes(i);
     if (!locked) return chosen ? 'selected' : undefined;
@@ -87,8 +87,8 @@ export function MultiSelectQuestion({ q, locked, onAnswer }: QuestionProps) {
   );
 }
 
-export function TrueFalseQuestion({ q, locked, onAnswer }: QuestionProps) {
-  const [sel, setSel] = useState<boolean | null>(null);
+export function TrueFalseQuestion({ q, locked, onAnswer, initial, paused }: QuestionProps) {
+  const [sel, setSel] = useState<boolean | null>(initial?.type === 'true_false' ? initial.value : null);
   const pick = useCallback(
     (i: number) => {
       if (locked) return;
@@ -99,7 +99,7 @@ export function TrueFalseQuestion({ q, locked, onAnswer }: QuestionProps) {
     },
     [locked, onAnswer],
   );
-  useDigitKeys(2, pick, !locked);
+  useDigitKeys(2, pick, !locked && !paused);
   const stateOf = (value: boolean): TileState => {
     if (!locked) return sel === value ? 'selected' : undefined;
     if (value === q.answer) return 'correct';

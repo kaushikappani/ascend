@@ -1,12 +1,21 @@
 // Tracks and their AI-designed roadmaps.
 import type { NewTrackInput } from '@shared/api';
-import { START_LEVEL_OPTIONS } from '@shared/constants';
-import { nextTopic } from '@shared/progress';
+import { CORE_LEVELS, EXTEND_LEVELS, MAX_LEVELS } from '@shared/constants';
+import { canExtendTrack, nextTopic } from '@shared/progress';
 import type { Level, Track } from '@shared/types';
-import { activeTarget, daysUntil, learnerProfileText, targetSummaryText, tracksOverviewText } from '../agent/context';
-import { roadmapPrompt, SYSTEM, targetRoadmapPrompt } from '../agent/prompts';
+import {
+  activeTarget,
+  conceptListText,
+  daysUntil,
+  learnerProfileText,
+  strongConcepts,
+  targetSummaryText,
+  tracksOverviewText,
+  weakConcepts,
+} from '../agent/context';
+import { extendRoadmapPrompt, roadmapPrompt, SYSTEM, targetRoadmapPrompt } from '../agent/prompts';
 import { mainModel, runAgent } from '../agent/runtime';
-import { roadmapSchema, type RoadmapOutput } from '../agent/schemas';
+import { extensionSchema, roadmapSchema, type RoadmapOutput } from '../agent/schemas';
 import { toast } from '../events';
 import { jobs } from '../jobs';
 import { store } from '../store';
@@ -25,7 +34,9 @@ export function createTrack(input: NewTrackInput): string {
     emoji: input.emoji || '📘',
     color: input.color || '#6D5DF6',
     levels: [],
-    startLevel: kind === 'target' ? 99 : clamp(Math.round(input.startLevel || 1), 1, 10),
+    // Everyone starts at level 1; the roadmap itself is pitched at the learner's starting point.
+    startLevel: kind === 'target' ? 99 : 1,
+    baseLevel: kind === 'target' ? undefined : clamp(Math.round(input.proficiency || 1), 1, 10),
     status: 'generating',
     createdAt: now,
     updatedAt: now,
@@ -40,12 +51,12 @@ export function createTrack(input: NewTrackInput): string {
   return track.id;
 }
 
-function normalizeLevels(out: RoadmapOutput, max: number): Level[] {
+function normalizeLevels(out: Pick<RoadmapOutput, 'levels'>, max: number, offset = 0): Level[] {
   return (out.levels ?? [])
     .slice(0, max)
     .map((l, i) => ({
-      number: i + 1,
-      title: truncate(asString(l.title) || `Level ${i + 1}`, 60),
+      number: offset + i + 1,
+      title: truncate(asString(l.title) || `Level ${offset + i + 1}`, 60),
       summary: asString(l.summary),
       topics: (l.topics ?? [])
         .slice(0, 7)
@@ -91,13 +102,11 @@ export async function generateRoadmap(trackId: string): Promise<void> {
         maxStages: max,
       });
     } else {
-      const startLabel = START_LEVEL_OPTIONS.find((o) => o.level === track.startLevel)?.label ?? 'self-placed';
       const t = activeTarget(d);
       prompt = roadmapPrompt({
         track,
         learner: learnerProfileText(d),
         research: d.settings.research,
-        startLabel,
         targetText: t ? targetSummaryText(t) : undefined,
       });
     }
@@ -112,7 +121,8 @@ export async function generateRoadmap(trackId: string): Promise<void> {
       maxTurns: 14,
     });
     const levels = normalizeLevels(out.data as RoadmapOutput, max);
-    if (levels.length < Math.min(min, 3)) throw new Error('The roadmap came back incomplete. Please retry.');
+    // Core roadmaps always have their full 10 levels; company prep paths may be shorter.
+    if (levels.length < (isTarget ? Math.min(min, 3) : CORE_LEVELS)) throw new Error('The roadmap came back incomplete. Please retry.');
     store.mutate(() => {
       track.levels = levels;
       track.tagline = track.tagline || truncate(asString(out.data?.tagline), 90);
@@ -148,8 +158,82 @@ export function regenerateTrack(trackId: string): void {
     for (const [id, l] of Object.entries(d.lessons)) if (l.trackId === trackId && l.status !== 'completed') delete d.lessons[id];
     d.trackProgress[trackId] = { trackId, checkpoints: {} };
     track.levels = [];
+    if (track.kind !== 'target') {
+      // Roadmaps from before calibration placed the learner by unlocking levels; the new one starts at their level instead.
+      track.baseLevel ??= track.startLevel;
+      track.startLevel = 1;
+    }
   });
   void generateRoadmap(trackId).catch(() => undefined);
+}
+
+/** Learning doesn't stop at level 10: once the last level is done, design the next few around what the learner has mastered. */
+export function extendRoadmap(trackId: string): void {
+  const d = store.data;
+  const track = d.tracks.find((t) => t.id === trackId);
+  if (!track || track.kind === 'target' || track.status !== 'ready' || jobs.isRunning('roadmap', trackId)) return;
+  if (!canExtendTrack(track, d.topicProgress, d.trackProgress)) {
+    throw new Error(`Finish all ${Math.max(CORE_LEVELS, track.levels.length)} levels first — then your roadmap keeps growing.`);
+  }
+  const count = Math.min(EXTEND_LEVELS, MAX_LEVELS - track.levels.length);
+  if (count <= 0) throw new Error(`This roadmap already has ${MAX_LEVELS} levels. Add a new track to go further.`);
+  void designExtension(track, count).catch(() => undefined);
+}
+
+async function designExtension(track: Track, count: number): Promise<void> {
+  const d = store.data;
+  const trackId = track.id;
+  const from = track.levels.length + 1;
+  const to = from + count - 1;
+  const model = mainModel();
+  const job = jobs.start('roadmap', `Designing levels ${from}–${to} of ${track.title}`, { refId: trackId, model });
+  try {
+    const t = activeTarget(d);
+    const out = await runAgent<Pick<RoadmapOutput, 'levels'>>({
+      job,
+      system: SYSTEM.roadmap,
+      prompt: extendRoadmapPrompt({
+        track,
+        learner: learnerProfileText(d),
+        strong: conceptListText(strongConcepts(d, { trackId }, 8)),
+        weak: conceptListText(weakConcepts(d, { trackId }, 8)),
+        from,
+        count,
+        research: d.settings.research,
+        targetText: t ? targetSummaryText(t) : undefined,
+      }),
+      model,
+      effort: 'high',
+      schema: extensionSchema(count),
+      web: d.settings.research !== 'off',
+      maxTurns: 14,
+    });
+    const taken = new Set(track.levels.flatMap((l) => l.topics.map((tp) => tp.title.toLowerCase())));
+    const levels = normalizeLevels(out.data as Pick<RoadmapOutput, 'levels'>, count, track.levels.length)
+      .map((l) => ({ ...l, topics: l.topics.filter((tp) => !taken.has(tp.title.toLowerCase())) }))
+      .filter((l) => l.topics.length > 0);
+    if (!levels.length) throw new Error('The new levels came back empty. Please retry.');
+    if (!store.data.tracks.includes(track)) {
+      job.done();
+      return;
+    }
+    store.mutate(() => {
+      track.levels.push(...levels);
+      track.updatedAt = nowIso();
+    });
+    job.done();
+    const last = levels.at(-1)?.number ?? to;
+    toast({
+      kind: 'success',
+      title: `${track.emoji} Your ${track.title} roadmap grew`,
+      body: `Levels ${from}–${last} are ready: ${levels.map((l) => l.title).join(', ')}.`,
+    });
+    prefetchNext(trackId);
+  } catch (error) {
+    job.fail(error);
+    if (!job.signal.aborted) toast({ kind: 'error', title: `Couldn't extend ${track.title}`, body: errorMessage(error) });
+    throw error;
+  }
 }
 
 export function removeTrack(trackId: string): void {

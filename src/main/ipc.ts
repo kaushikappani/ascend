@@ -24,7 +24,7 @@ import {
   warmGrader,
 } from './services/lessons';
 import { createTarget, removeTarget, retryTarget, setActiveTarget } from './services/targets';
-import { createTrack, regenerateTrack, removeTrack, setActiveTrack, setStartLevel } from './services/tracks';
+import { createTrack, extendRoadmap, regenerateTrack, removeTrack, setActiveTrack, setStartLevel } from './services/tracks';
 
 export const TITLEBAR = {
   light: { color: '#F6F6FB', symbolColor: '#2B2D42' },
@@ -160,6 +160,7 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
       remove: async (trackId) => removeTrack(trackId),
       setActive: async (trackId) => setActiveTrack(trackId),
       setStartLevel: async (trackId, level) => setStartLevel(trackId, level),
+      extend: async (trackId) => extendRoadmap(trackId),
     },
     lessons: {
       start: async (input) => startLesson(input),
@@ -169,7 +170,19 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
       warmGrader: async (lessonId) => {
         void warmGrader(lessonId);
       },
-      complete: async (lessonId, durationMs) => completeLesson(lessonId, durationMs),
+      complete: async (lessonId, durationMs) => {
+        const result = completeLesson(lessonId, durationMs);
+        // Finishing the last level opens the next stretch of the roadmap right away.
+        const trackId = getLesson(lessonId)?.trackId;
+        if (result.trackCompleted && trackId) {
+          try {
+            extendRoadmap(trackId);
+          } catch {
+            // The learner can still extend it by hand from the path.
+          }
+        }
+        return result;
+      },
       abandon: async (lessonId) => abandonLesson(lessonId),
       retry: async (lessonId) => retryLesson(lessonId),
     },

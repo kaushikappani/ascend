@@ -24,11 +24,15 @@ export function FeedbackSheet({
   result,
   onContinue,
   onExplain,
+  continueLabel = 'Continue',
+  hintUsed,
 }: {
   q: Question;
   result: AnswerResult;
   onContinue: () => void;
   onExplain: () => void;
+  continueLabel?: string;
+  hintUsed?: boolean;
 }) {
   const v = result.verdict;
   const title = useMemo(() => (v === 'correct' ? pick(PRAISE) : v === 'partial' ? 'Partly right' : pick(ENCOURAGE)), [v]);
@@ -64,7 +68,14 @@ export function FeedbackSheet({
           )}
         </div>
         <div className="max-h-[36vh] min-w-0 flex-1 overflow-y-auto pr-2">
-          <div className="text-[22px] font-black">{title}</div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[22px] font-black">{title}</span>
+            {hintUsed && v !== 'incorrect' && (
+              <span className="flex items-center gap-1 rounded-full bg-elev/70 px-2.5 py-0.5 text-[12px] font-extrabold">
+                <Lightbulb className="size-3.5" /> With a hint · half XP
+              </span>
+            )}
+          </div>
           {answer && (
             <div className="mt-1 text-[15px] font-extrabold">
               Correct answer: <InlineText text={answer} className="font-bold" />
@@ -101,7 +112,7 @@ export function FeedbackSheet({
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <Button caps size="lg" variant={v === 'correct' ? 'success' : v === 'partial' ? 'warn' : 'danger'} onClick={onContinue}>
-            Continue
+            {continueLabel}
           </Button>
           <div className="flex items-center gap-1 text-[11px] font-bold opacity-70">
             <Kbd>Enter</Kbd>
