@@ -98,15 +98,38 @@
     .btn-secondary { background: var(--bg-elev); color: var(--text); border: 2px solid var(--border); box-shadow: 0 5px 0 var(--border-strong); }
     .btn-secondary:hover { background: var(--bg-sunken); }
     .btn-secondary:active { box-shadow: 0 2px 0 var(--border-strong); }
-    .btn-coffee { background: #ffdd00; color: #1d1e33; box-shadow: 0 5px 0 #c9ae00; }
-    .btn-coffee:hover { filter: brightness(1.04); }
-    .btn-coffee:active { box-shadow: 0 2px 0 #c9ae00; }
-    .support {
-      position: relative; z-index: 1; max-width: 900px; margin: 22px auto 0; padding: 18px 22px; border-radius: 24px;
-      background: rgb(255 255 255 / 0.12); display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px;
+
+    /* UPI support */
+    .upi {
+      display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; align-items: center;
+      padding: 52px; border-radius: 40px; background: var(--bg-elev); border: 2px solid var(--border); position: relative; overflow: hidden;
     }
-    .support p { flex: 1 1 320px; font-weight: 700; color: rgb(255 255 255 / 0.92); }
-    .support .btn { height: 50px; font-size: 14.5px; }
+    .upi::before { content: ''; position: absolute; inset: 0 0 auto; height: 6px; background: linear-gradient(90deg, #ff9933 0 33%, #ffffff 33% 66%, #138808 66%); }
+    .upi-text { display: grid; gap: 16px; }
+    .upi-steps { list-style: none; counter-reset: s; padding: 0; margin: 4px 0 0; display: grid; gap: 12px; }
+    .upi-steps li { counter-increment: s; position: relative; padding-left: 42px; font-weight: 700; color: var(--muted); min-height: 30px; }
+    .upi-steps li b { color: var(--text); }
+    .upi-steps li::before {
+      content: counter(s); position: absolute; left: 0; top: -2px; width: 30px; height: 30px; border-radius: 10px;
+      display: grid; place-items: center; background: var(--brand-soft); color: var(--brand-ink); font-weight: 900; font-size: 15px;
+    }
+    .upi-id { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 12px 12px 18px; border-radius: 20px; background: var(--bg-sunken); border: 2px dashed var(--border-strong); }
+    .upi-id small { font-size: 12px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    .upi-id strong { font-size: 22px; font-weight: 900; letter-spacing: 0.01em; flex: 1; min-width: 0; word-break: break-all; }
+    .upi-id .btn { height: 44px; padding: 0 18px; font-size: 13.5px; border-radius: 14px; }
+    /* Phones get tap-to-pay; desktops get the QR to scan with a phone. */
+    .upi .phone-only { display: none; }
+    .is-phone .upi .phone-only { display: grid; }
+    .is-phone .upi .desk-only { display: none; }
+    .upi-pay { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .upi-pay .btn { height: 50px; padding: 0 14px; font-size: 15px; }
+    .is-phone .upi-card { cursor: pointer; }
+    .upi-card { justify-self: center; width: 100%; max-width: 340px; padding: 22px; border-radius: 30px; background: linear-gradient(160deg, #7b6bff, #4a2fd0); color: #fff; text-align: center; box-shadow: var(--shadow); }
+    .upi-qr { background: #fff; border-radius: 20px; padding: 12px; }
+    .upi-qr img { width: 100%; height: auto; image-rendering: pixelated; }
+    .upi-card-name { margin-top: 14px; font-weight: 900; font-size: 19px; }
+    .upi-card-id { font-weight: 800; opacity: 0.9; }
+    .upi-apps { margin-top: 10px; font-size: 13px; font-weight: 800; opacity: 0.8; }
 
     /* Nav */
     .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: saturate(160%) blur(14px); background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--border); }
@@ -117,6 +140,7 @@
     .nav-links a { text-decoration: none; color: var(--muted); }
     .nav-links a:hover { color: var(--text); }
     .nav .btn { height: 42px; padding: 0 18px; font-size: 13px; border-radius: 14px; box-shadow: 0 4px 0 var(--brand-deep); }
+    .nav .nav-support { display: none; box-shadow: 0 4px 0 var(--border-strong); }
 
     /* Hero */
     .hero { position: relative; padding: 72px 0 40px; overflow: hidden; }
@@ -262,7 +286,11 @@
       .bubble { left: 92px; bottom: 50px; }
       .steps, .grid { grid-template-columns: 1fr 1fr; }
       .nav-links { display: none; }
+      .nav .wrap { gap: 10px; }
+      .nav .nav-support { display: inline-flex; margin-left: auto; padding: 0 12px; font-size: 12px; }
+      .nav .nav-support + .btn { margin-left: 0; padding: 0 12px; font-size: 12px; }
       .nav .btn { margin-left: auto; }
+      .upi { grid-template-columns: 1fr; gap: 34px; padding: 44px 28px; }
       /* The pinned screenshot sits on top and the steps scroll underneath it. */
       .tour { grid-template-columns: 1fr; gap: 0; }
       .tour-stage { order: -1; top: 68px; z-index: 5; background: var(--bg); padding-top: 12px; }
@@ -276,6 +304,9 @@
       body { font-size: 16px; }
       .steps, .grid { grid-template-columns: 1fr; }
       .dl-grid { grid-template-columns: minmax(0, 1fr); }
+      .upi { padding: 34px 18px; border-radius: 28px; }
+      .upi-id strong { font-size: 20px; word-break: normal; }
+      .upi-id .btn { width: 100%; }
       .dl .btn { white-space: normal; height: auto; min-height: 56px; padding: 12px 18px; text-align: center; line-height: 1.25; }
       .download { padding: 44px 18px; border-radius: 28px; }
       .dl { padding: 22px; }
@@ -307,8 +338,9 @@
         <a href="#tour">Tour</a>
         <a href="#faq">FAQ</a>
         <a href="https://github.com/kaushikappani/ascend">GitHub</a>
-        <a data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+        <a href="#support">Support via UPI</a>
       </div>
+      <a class="btn btn-secondary nav-support" href="#support">₹ Support</a>
       <a class="btn btn-primary" href="#download">Download</a>
     </div>
   </nav>
@@ -571,9 +603,49 @@
           </div>
         </div>
         <p class="version" data-version>Builds are published on <a href="https://github.com/kaushikappani/ascend/releases">GitHub Releases</a>.</p>
-        <div class="support">
-          <p>Ascend is a free download, built and maintained by one developer. If it helps you learn, you can support its development.</p>
-          <a class="btn btn-coffee" data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="support" style="padding-top: 10px">
+    <div class="wrap">
+      <div class="upi">
+        <div class="upi-text">
+          <span class="eyebrow">Support Ascend</span>
+          <h2>Keep Ascend growing with UPI</h2>
+          <p class="lead">Ascend is free and built by one developer. If it helps you learn, chip in any amount over UPI. It keeps new levels, features and builds coming.</p>
+          <!-- Phones: one tap opens the UPI app with everything filled in. -->
+          <div class="upi-pay phone-only">
+            <a class="btn btn-primary" href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend&amp;am=49">Pay ₹49</a>
+            <a class="btn btn-primary" href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend&amp;am=99">Pay ₹99</a>
+            <a class="btn btn-primary" href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend&amp;am=199">Pay ₹199</a>
+            <a class="btn btn-secondary" data-upi-any href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend">Any amount</a>
+          </div>
+          <ol class="upi-steps desk-only">
+            <li><b>Scan the QR code</b> with Google Pay, PhonePe, Paytm, BHIM or any UPI app.</li>
+            <li>Or <b>copy the UPI ID</b> and pay from your app.</li>
+            <li>Pick any amount you like. Every rupee helps. Thank you!</li>
+          </ol>
+          <ol class="upi-steps phone-only">
+            <li><b>Tap an amount</b> above. Your UPI app opens with everything filled in.</li>
+            <li>Or <b>copy the UPI ID</b> and pay from Google Pay, PhonePe, Paytm or BHIM.</li>
+            <li>Confirm in your app. Every rupee helps. Thank you!</li>
+          </ol>
+          <div class="upi-id">
+            <div style="display: grid; flex: 1; min-width: 0">
+              <small>UPI ID</small>
+              <strong data-upi-id>7993790639@upi</strong>
+            </div>
+            <button type="button" class="btn btn-secondary" data-copy-upi>Copy UPI ID</button>
+          </div>
+          <p class="fine">Outside India? Use the coffee button in the bottom-right corner.</p>
+        </div>
+        <div class="upi-card" data-upi-card>
+          <div class="upi-qr"><img src="assets/upi-qr.svg" width="320" height="320" alt="UPI QR code for 7993790639@upi. Scan with any UPI app to support Ascend." /></div>
+          <div class="upi-card-name">Appani Kaushik</div>
+          <div class="upi-card-id">7993790639@upi</div>
+          <div class="upi-apps desk-only">Scan with any UPI app</div>
+          <div class="upi-apps phone-only">Tap to open your UPI app</div>
         </div>
       </div>
     </div>
@@ -592,7 +664,7 @@
         </details>
         <details>
           <summary>Does it cost anything to use?</summary>
-          <p>Ascend itself is a free download (if it helps you, you can <a data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">buy me a coffee</a>). Lessons, grading and practice run on your own Claude account, so they count towards your plan's usage, or your API bill if you use a key. Settings shows how much it has used, and a lighter model or “Faster” mode stretches it further.</p>
+          <p>Ascend itself is a free download (if it helps you, you can <a href="#support">support it via UPI</a>). Lessons, grading and practice run on your own Claude account, so they count towards your plan's usage, or your API bill if you use a key. Settings shows how much it has used, and a lighter model or “Faster” mode stretches it further.</p>
         </details>
         <details>
           <summary>I already know the basics. Do I have to start from scratch?</summary>
@@ -625,7 +697,7 @@
       <span style="margin-left: auto; display: flex; gap: 22px; flex-wrap: wrap">
         <a href="https://github.com/kaushikappani/ascend">Source on GitHub</a>
         <a href="https://github.com/kaushikappani/ascend/releases">All releases</a>
-        <a data-bmc href="https://buymeacoffee.com/appanikaushik" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+        <a href="#support">Support via UPI</a>
         <span>© 2026 Appani Kaushik</span>
       </span>
     </div>
@@ -764,14 +836,31 @@
           primary.href = macBtn.href;
         }).catch(function () {});
       }
-      // Coffee buttons open the Buy Me a Coffee popup in the page; the plain link is only a fallback.
-      document.addEventListener('click', function (e) {
-        var link = e.target.closest && e.target.closest('[data-bmc]');
-        var widget = link && document.getElementById('bmc-wbtn');
-        if (!widget) return;
-        e.preventDefault();
-        widget.click();
+      // ---------------------------------------------------------------------
+      // UPI support: copy the ID anywhere; phones also get one-tap UPI app buttons.
+      // ---------------------------------------------------------------------
+      var copyBtn = document.querySelector('[data-copy-upi]');
+      var upiId = document.querySelector('[data-upi-id]').textContent.trim();
+      copyBtn.addEventListener('click', function () {
+        var done = function () {
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(function () { copyBtn.textContent = 'Copy UPI ID'; }, 1800);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(upiId).then(done, function () {});
+        else {
+          var range = document.createRange();
+          range.selectNodeContents(document.querySelector('[data-upi-id]'));
+          getSelection().removeAllRanges();
+          getSelection().addRange(range);
+        }
       });
+      // On a phone, supporting means opening the UPI app straight away (upi:// links only work where UPI apps live).
+      if (/Android|iPhone|iPad/i.test(ua)) {
+        var upiLink = document.querySelector('[data-upi-any]').href;
+        document.documentElement.classList.add('is-phone');
+        Array.prototype.forEach.call(document.querySelectorAll('a[href="#support"]'), function (a) { a.href = upiLink; });
+        document.querySelector('[data-upi-card]').addEventListener('click', function () { location.href = upiLink; });
+      }
 
       fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
         .then(function (r) { return r.ok ? r.json() : null; })
