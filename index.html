@@ -121,9 +121,8 @@
     .upi .phone-only { display: none; }
     .is-phone .upi .phone-only { display: grid; }
     .is-phone .upi .desk-only { display: none; }
-    .upi-pay { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .upi-pay { grid-template-columns: minmax(0, 1fr); }
     .upi-pay .btn { height: 50px; padding: 0 14px; font-size: 15px; }
-    .is-phone .upi-card { cursor: pointer; }
     .upi-card { justify-self: center; width: 100%; max-width: 340px; padding: 22px; border-radius: 30px; background: linear-gradient(160deg, #7b6bff, #4a2fd0); color: #fff; text-align: center; box-shadow: var(--shadow); }
     .upi-qr { background: #fff; border-radius: 20px; padding: 12px; }
     .upi-qr img { width: 100%; height: auto; image-rendering: pixelated; }
@@ -614,12 +613,10 @@
           <span class="eyebrow">Support Ascend</span>
           <h2>Keep Ascend growing with UPI</h2>
           <p class="lead">Ascend is free and built by one developer. If it helps you learn, chip in any amount over UPI. It keeps new levels, features and builds coming.</p>
-          <!-- Phones: one tap opens the UPI app with everything filled in. -->
+          <!-- Phones can't scan their own screen, and UPI apps block payment links to personal UPI IDs,
+               so phone visitors save the QR and scan it from their gallery (or paste the UPI ID). -->
           <div class="upi-pay phone-only">
-            <a class="btn btn-primary" href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend&amp;am=49">Pay ₹49</a>
-            <a class="btn btn-primary" href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend&amp;am=99">Pay ₹99</a>
-            <a class="btn btn-primary" href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend&amp;am=199">Pay ₹199</a>
-            <a class="btn btn-secondary" data-upi-any href="upi://pay?pa=7993790639@upi&amp;pn=Appani%20Kaushik&amp;cu=INR&amp;tn=Support%20Ascend">Any amount</a>
+            <a class="btn btn-primary" href="assets/upi-qr.png" download="Ascend-UPI-QR.png">Save QR to gallery</a>
           </div>
           <ol class="upi-steps desk-only">
             <li><b>Scan the QR code</b> with Google Pay, PhonePe, Paytm, BHIM or any UPI app.</li>
@@ -627,9 +624,9 @@
             <li>Pick any amount you like. Every rupee helps. Thank you!</li>
           </ol>
           <ol class="upi-steps phone-only">
-            <li><b>Tap an amount</b> above. Your UPI app opens with everything filled in.</li>
-            <li>Or <b>copy the UPI ID</b> and pay from Google Pay, PhonePe, Paytm or BHIM.</li>
-            <li>Confirm in your app. Every rupee helps. Thank you!</li>
+            <li><b>Save the QR</b> above, or <b>copy the UPI ID</b> below.</li>
+            <li>Open Google Pay, PhonePe, Paytm or BHIM. Tap <b>Scan</b> and pick the QR from your gallery, or paste the UPI ID under <b>Pay UPI ID</b>.</li>
+            <li>Enter any amount and pay. Every rupee helps. Thank you!</li>
           </ol>
           <div class="upi-id">
             <div style="display: grid; flex: 1; min-width: 0">
@@ -645,7 +642,7 @@
           <div class="upi-card-name">Appani Kaushik</div>
           <div class="upi-card-id">7993790639@upi</div>
           <div class="upi-apps desk-only">Scan with any UPI app</div>
-          <div class="upi-apps phone-only">Tap to open your UPI app</div>
+          <div class="upi-apps phone-only">Save it, then scan it from your gallery</div>
         </div>
       </div>
     </div>
@@ -843,8 +840,8 @@
       var upiId = document.querySelector('[data-upi-id]').textContent.trim();
       copyBtn.addEventListener('click', function () {
         var done = function () {
-          copyBtn.textContent = 'Copied ✓';
-          setTimeout(function () { copyBtn.textContent = 'Copy UPI ID'; }, 1800);
+          copyBtn.textContent = document.documentElement.classList.contains('is-phone') ? 'Copied ✓ Now paste it in your UPI app' : 'Copied ✓';
+          setTimeout(function () { copyBtn.textContent = 'Copy UPI ID'; }, 2600);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(upiId).then(done, function () {});
         else {
@@ -854,13 +851,8 @@
           getSelection().addRange(range);
         }
       });
-      // On a phone, supporting means opening the UPI app straight away (upi:// links only work where UPI apps live).
-      if (/Android|iPhone|iPad/i.test(ua)) {
-        var upiLink = document.querySelector('[data-upi-any]').href;
-        document.documentElement.classList.add('is-phone');
-        Array.prototype.forEach.call(document.querySelectorAll('a[href="#support"]'), function (a) { a.href = upiLink; });
-        document.querySelector('[data-upi-card]').addEventListener('click', function () { location.href = upiLink; });
-      }
+      // Phones get the save-the-QR flow: UPI apps reject payment links to personal UPI IDs, but scanning works.
+      if (/Android|iPhone|iPad/i.test(ua)) document.documentElement.classList.add('is-phone');
 
       fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
         .then(function (r) { return r.ok ? r.json() : null; })
